@@ -5,7 +5,7 @@ import { COLUMNS, exportCsv } from "./exportCsv";
 import type { AdminPerson, AdminSnapshot } from "./model";
 
 /**
- * THE ONE FILE THE HOST KEEPS — People's EXPORT. Run with `npm test`.
+ * THE ONE FILE THE HOST KEEPS — Lead management's EXPORT. Run with `npm test`.
  */
 
 /** A row with nothing in it — every optional fact absent. */
@@ -32,6 +32,7 @@ function person(over: Partial<AdminPerson> = {}): AdminPerson {
     company: null,
     regEmail: null,
     attendee: null,
+    lead: { steps: { message: false, call: false, calendar: false }, cats: [], owner: null, next: "" },
     phone: null,
     registeredAt: null,
     removed: false,
@@ -61,10 +62,32 @@ const parse = (csv: string) =>
 test("the sheet always has the same columns, in order", () => {
   const [head] = parse(exportCsv(snapshot([])));
   assert.deepEqual(head, COLUMNS.map((c) => c.head));
-  assert.deepEqual(head, ["Name", "Title", "Company", "Email", "Phone", "LinkedIn", "Role", "Registration status", "Attendee", "Registered", "Code"]);
+  assert.deepEqual(head, [
+    "Name",
+    "Title",
+    "Company",
+    "Email",
+    "Phone",
+    "LinkedIn",
+    "Role",
+    "Registration status",
+    "Attendee",
+    "Registered",
+    "Code",
+    "Message",
+    "Call",
+    "Calendar",
+    "Confirmed",
+    "Potential client",
+    "Current client",
+    "Potential collaboration",
+    "Potential speaker",
+    "Owner",
+    "Next action",
+  ]);
 });
 
-test("a sign-up's row carries what they registered with; an invited row says who added them", () => {
+test("a sign-up's row carries what they registered with and what the team recorded; an invited row says who added them", () => {
   const rows = parse(
     exportCsv(
       snapshot([
@@ -79,14 +102,41 @@ test("a sign-up's row carries what they registered with; an invited row says who
           attendee: "returning",
           registeredAt: "2026-10-05T11:30:00Z",
           code: "4821",
+          lead: { steps: { message: true, call: true, calendar: false }, cats: ["potential_client", "potential_speaker"], owner: "Basma", next: "Send the proposal" },
         }),
         person({ id: "a2", name: "Omar", isTeam: true, role: "host" }),
+        person({ id: "a3", name: "Nour", regStatus: "new" }),
       ]),
     ),
   );
   // 11:30 UTC is 14:30 in Cairo (EEST, UTC+3, on 5 Oct 2026).
-  assert.deepEqual(rows[1], ["Sara Adel", "Designer", "Dotment", "sara@example.com", "01012345678", "linkedin.com/in/sara", "Member", "Confirmed", "Attended before", "2026-10-05 14:30", "4821"]);
-  assert.deepEqual(rows[2], ["Omar", "", "", "", "", "", "Host team", "Added by host", "", "", ""]);
+  assert.deepEqual(rows[1], [
+    "Sara Adel",
+    "Designer",
+    "Dotment",
+    "sara@example.com",
+    "01012345678",
+    "linkedin.com/in/sara",
+    "Member",
+    "Confirmed",
+    "Attended before",
+    "2026-10-05 14:30",
+    "4821",
+    "Yes",
+    "Yes",
+    "",
+    "Yes",
+    "Yes",
+    "",
+    "",
+    "Yes",
+    "Basma",
+    "Send the proposal",
+  ]);
+  assert.deepEqual(rows[2], ["Omar", "", "", "", "", "", "Host team", "Added by host", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
+  // A sign-up not confirmed yet: registered, nothing ticked.
+  assert.equal(rows[3][7], "Registered");
+  assert.equal(rows[3][14], "");
 });
 
 test("quotes are doubled and a would-be formula stays text", () => {

@@ -5,24 +5,22 @@ import { AnimatePresence, motion } from "motion/react";
 
 import type { Layout } from "@/components/admin/AdminShell";
 import { ConfirmSheet } from "@/components/admin/ConfirmSheet";
+import { NextAction, OwnerSelect, Tick, useLeadEdits, type LeadWrites } from "@/components/admin/lead";
 import { AddDrawer } from "@/components/admin/people/AddDrawer";
 import { useLeaving } from "@/components/admin/people/bits";
 import type { NewPerson } from "@/components/admin/people/types";
-import { Avatar, Btn, cx, LinkBtn, StatePill, Swap, useHeldKeys, usePending, usePendingKeys } from "@/components/admin/ui";
-import { eventDay } from "@/lib/admin/eventClock";
+import { Avatar, Btn, cx, usePending, usePendingKeys, useHeldKeys } from "@/components/admin/ui";
 import type { AdminPerson, AdminSnapshot } from "@/lib/admin/model";
 import { personImpactLines, ZERO_PERSON_IMPACT, type PersonAsk, type PersonImpact } from "@/lib/admin/runs";
-import { fold, spring } from "@/lib/motion";
-import { holdsSeat, registrationCapacity, type RegStatus } from "@/lib/registration";
-import type { EventStateRow } from "@/lib/supabase/types";
+import { LEAD_CAT_LABEL, LEAD_CATS, type LeadCat } from "@/lib/leads";
+import { spring } from "@/lib/motion";
 
 export type PeopleViewProps = {
   layout: Layout;
   snapshot: AdminSnapshot;
-  state: EventStateRow;
   query: string;
   onQuery: (v: string) => void;
-  /** all · signed · added · removed */
+  /** all · a category (lib/leads.ts LEAD_CATS) · unassigned · removed */
   filter: string;
   onFilter: (v: string) => void;
   sort: string;
@@ -32,9 +30,12 @@ export type PeopleViewProps = {
   openPerson: (id: string, edit?: boolean) => void;
   /** The error line's words for the last write that failed — the add drawer says them inside itself. */
   lastError: string;
-  /** Sign-ups on the Registration page, not confirmed yet — a pointer, not a list. */
-  waiting: number;
-  openRegistrationPage: () => void;
+  /** The names every Owner drop-down offers (the `lead_owners` setting). */
+  owners: string[];
+  /** Opens the owners list (AdminRoot's OwnersSheet). */
+  openOwners: () => void;
+  /** A category, the owner, the next action — each resolves once the refreshed list is on screen; null when it failed. */
+  writes: LeadWrites;
   /* Each resolves once the refreshed list is on screen, with the route's answer; null when it failed. */
   onAdd: (person: NewPerson) => Promise<unknown>;
   onBulk: (text: string) => Promise<unknown>;
@@ -44,13 +45,11 @@ export type PeopleViewProps = {
   onPurgeOne: (id: string, confirm: boolean) => Promise<PersonAsk | null>;
   /** Everyone on the removed list, for good — the same two steps. */
   onPurgeAll: (confirm: boolean) => Promise<(PersonAsk & { count?: number }) | null>;
-  /** Back to the Registration page's queue, as approved — the one way off this list that is not a removal. */
-  onRegStatus: (id: string, status: RegStatus | null) => Promise<unknown>;
   exportHref: string;
 };
 
-/** Where a person is, as shown: on this list, back in the Registration page's queue, or under Removed. */
-type Place = "list" | "queue" | "removed";
+/** Where a person is, as shown: on this list, or under Removed. */
+type Place = "list" | "removed";
 
 /** A list arriving or leaving: rows rise in, fade out, and the rest glide into place. */
 const rowMotion = {
@@ -61,35 +60,38 @@ const rowMotion = {
   transition: spring.smooth,
 };
 
-/** Came through the registration page and was confirmed — not added by the host. */
-const signedUp = (p: AdminPerson) => p.regStatus === "confirmed";
+/** The categories' column heads, on two lines (the file's POTENTIAL / CLIENT). */
+const CAT_HEAD: Record<LeadCat, [string, string]> = {
+  potential_client: ["Potential", "client"],
+  current_client: ["Current", "client"],
+  potential_collab: ["Potential", "collab"],
+  potential_speaker: ["Potential", "speaker"],
+};
+const UNASSIGNED = "__unassigned__";
+
+/** Where they stand on the list: the small chip by their name. */
+function standing(p: AdminPerson): { word: string; tone: string; title: string } {
+  if (p.regStatus === "confirmed") return { word: "Confirmed", tone: "done", title: "Signed up on the page and confirmed: they hold a seat" };
+  if (p.regStatus) return { word: "Registered", tone: "wait", title: "Signed up on the page; not confirmed yet (Registrations)" };
+  return { word: "Added", tone: "", title: "You added them here" };
+}
 
 /**
- * PEOPLE — one list: everyone who is coming.
+ * LEAD MANAGEMENT — everyone on this event's list, as leads (InCircle-One-System.html, "Lead
+ * management"; it was People, Belal 2026-10-05: "this is the name we should use instead of
+ * people"): every sign-up, confirmed or not, and everyone added by hand.
  *
- * CIB's People page, for registration: the invited list and the sign-ups the
- * host confirmed. The counts are the filters (one row of tiles, the chosen one
- * ringed in blue): everyone, who signed up through the page, who the host
- * added, and REMOVED, where the people taken off the list wait to come back
- * (or to be erased for good). Then search and the two actions, then one card
- * per person. The whole card opens them; it lifts and catches a sheen of blue
- * under the pointer. Its buttons are real buttons — To registration, Edit,
- * Remove.
+ * The counts are the filters (one row of tiles, the chosen one ringed in blue): everyone, each
+ * category, the unassigned, and REMOVED, where the people taken off the list wait to come back (or
+ * to be erased for good). Then search, the owner filter, OWNERS (the names the drop-downs offer),
+ * Export and Add someone, then one row per person: their name (it opens them), the four
+ * categories as ticks (a person can hold several), who owns them, and the next action, typed where
+ * it shows. EDIT opens the person drawer with the editor open; REMOVE (twice) takes them off.
  *
- * CIB's event-day columns (in the app now, check-in, the screen a phone is on)
- * are not here: nobody is in a room yet. The card shows how they got on the
- * list, when they registered, and their address.
- *
- * Sign-ups that are not confirmed yet are NOT here. They queue on the
- * Registration page, and confirming one there puts them on this list; TO
- * REGISTRATION on a card sends them back.
- *
- * Nothing unfolds under a card. EDIT opens the person drawer with the editor
- * already open; ADD SOMEONE opens a drawer of its own (AddDrawer).
+ * What they did at the event is not here (no history: Belal, 2026-10-05) — nobody is in a room yet.
  */
 export function PeopleView({
   snapshot,
-  state,
   query,
   onQuery,
   filter,
@@ -99,8 +101,9 @@ export function PeopleView({
   onSort,
   openPerson,
   lastError,
-  waiting,
-  openRegistrationPage,
+  owners,
+  openOwners,
+  writes,
   onAdd,
   onBulk,
   onRemove,
@@ -108,20 +111,18 @@ export function PeopleView({
   onRestoreOne,
   onPurgeOne,
   onPurgeAll,
-  onRegStatus,
   exportHref,
 }: PeopleViewProps) {
   const q = query.trim().toLowerCase();
 
   /*
-   * WAITING ON THE DATABASE. A card that leaves this list — Remove, To registration, Bring back —
-   * goes the moment it is pressed (its exit is the list's own), held until the refreshed list
-   * agrees; a failure lets go and it rises back in, the error line saying why. Other cards stay
-   * live throughout.
+   * WAITING ON THE DATABASE. A row that leaves this list — Remove, Bring back — goes the moment it
+   * is pressed (its exit is the list's own), held until the refreshed list agrees; a failure lets
+   * go and it rises back in, the error line saying why. Other rows stay live throughout.
    */
   const serverPlace = useMemo(() => {
     const m: Record<string, Place> = {};
-    for (const p of snapshot.people) m[p.id] = holdsSeat(p.regStatus) ? "list" : "queue";
+    for (const p of snapshot.people) m[p.id] = "list";
     for (const p of snapshot.removedPeople) m[p.id] = "removed";
     return m;
   }, [snapshot.people, snapshot.removedPeople]);
@@ -131,8 +132,9 @@ export function PeopleView({
   const whereOf = (id: string): Place | undefined => (leavingIds.has(id) ? "removed" : place.shownOf(id));
   const everyone = [...snapshot.people, ...snapshot.removedPeople];
   const people = everyone.filter((p) => whereOf(p.id) === "list");
+  const edits = useLeadEdits(snapshot.people, writes);
   const [rowPending, runRow] = usePendingKeys();
-  /** Moves a card at once, and back if the write fails. */
+  /** Moves a row at once, and back if the write fails. */
   const move = (id: string, to: Place, write: () => Promise<unknown>, what: string) =>
     void runRow(
       id,
@@ -144,10 +146,10 @@ export function PeopleView({
     );
 
   const [addOpen, setAddOpen] = useState(false);
+  const [ownerF, setOwnerF] = useState("");
 
-  /* Arm-twice for the per-card erasers, one id each so nothing stays hot. */
+  /* Arm-twice for Remove, one id at a time so nothing stays hot. */
   const [armDelId, setArmDelId] = useState<string | null>(null);
-  const [armBackId, setArmBackId] = useState<string | null>(null);
   const armT = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
@@ -155,31 +157,29 @@ export function PeopleView({
     },
     [],
   );
-  const arm = (set: (v: string | null) => void, id: string, fire: () => void, current: string | null) => {
-    if (current !== id) {
-      set(id);
+  const tapDelete = (id: string) => {
+    if (armDelId !== id) {
+      setArmDelId(id);
       if (armT.current) clearTimeout(armT.current);
-      armT.current = setTimeout(() => set(null), 3500);
+      armT.current = setTimeout(() => setArmDelId(null), 3500);
       return;
     }
     if (armT.current) clearTimeout(armT.current);
-    set(null);
-    fire();
+    setArmDelId(null);
+    move(id, "removed", () => onRemove(id), "remove");
   };
-  const tapDelete = (id: string) => arm(setArmDelId, id, () => move(id, "removed", () => onRemove(id), "remove"), armDelId);
-  const tapBack = (id: string) => arm(setArmBackId, id, () => move(id, "queue", () => onRegStatus(id, "approved"), "back"), armBackId);
-  const bringBack = (p: AdminPerson) => move(p.id, holdsSeat(p.regStatus) ? "list" : "queue", () => onRestoreOne(p.id), "restore");
+  const bringBack = (p: AdminPerson) => move(p.id, "list", () => onRestoreOne(p.id), "restore");
   const [restoringAll, runRestoreAll] = usePending();
   const bringAllBack = (all: AdminPerson[]) =>
     void runRestoreAll(async () => {
-      for (const p of all) place.hold(p.id, holdsSeat(p.regStatus) ? "list" : "queue");
+      for (const p of all) place.hold(p.id, "list");
       if ((await onRestore()) === null) for (const p of all) place.release(p.id);
     });
 
   /*
    * The purge sheet — the one irreversible control on this page. It opens at once and the dry
    * run's answer rises into it (a plain read: nothing re-renders behind it); confirmed, the button
-   * turns until the refreshed list has landed, the card fades out and the sheet closes on it.
+   * turns until the refreshed list has landed, the row fades out and the sheet closes on it.
    */
   const [purge, setPurge] = useState<{ id: string | null; name: string; count: number; impact: PersonImpact | null } | null>(null);
   const [, runPurgeRead] = usePending();
@@ -223,27 +223,28 @@ export function PeopleView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, removedCount]);
 
+  /* The owners the filter offers: the list, and any name still given to somebody after it left the list. */
+  const ownerNames = [...owners, ...people.map((p) => edits.owner(p)).filter((o): o is string => !!o && !owners.includes(o))].filter(
+    (o, i, all) => all.indexOf(o) === i,
+  );
+  useEffect(() => {
+    if (ownerF && ownerF !== UNASSIGNED && !ownerNames.includes(ownerF)) setOwnerF("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ownerF, ownerNames.join("\n")]);
+
   const matches = (p: AdminPerson) =>
-    !q || `${p.name} ${p.title} ${p.company ?? ""} ${p.regEmail ?? ""} ${p.phone ?? ""}`.toLowerCase().includes(q);
+    !q || `${p.name} ${p.title} ${p.company ?? ""} ${p.regEmail ?? ""} ${p.phone ?? ""} ${edits.owner(p) ?? ""} ${p.lead.next}`.toLowerCase().includes(q);
 
-  const capacity = registrationCapacity(state);
-  const signed = people.filter(signedUp);
-  const added = people.filter((p) => !signedUp(p));
-
-  /* `share` draws the tile's bar: its part of the list (Everyone: of the seats, when there is a cap). */
+  /* The counts, as shown: a tick pressed a moment ago already counts. */
   const of = (n: number) => (people.length ? n / people.length : 0);
-  const tiles: { key: string; label: string; count: number; dot: string; of?: number; share?: number; guide: string }[] = [
-    {
-      key: "all",
-      label: "Everyone",
-      count: people.length,
-      dot: "all",
-      of: capacity > 0 ? capacity : undefined,
-      share: capacity > 0 ? Math.min(1, people.length / capacity) : undefined,
-      guide: "Shows everyone on the list.",
-    },
-    { key: "signed", label: "Signed up", count: signed.length, dot: "done", share: of(signed.length), guide: "Shows the people who registered on the page and you confirmed." },
-    { key: "added", label: "Added by you", count: added.length, dot: "idle", share: of(added.length), guide: "Shows the people you added here yourself." },
+  const unassigned = people.filter((p) => !edits.owner(p)).length;
+  const tiles: { key: string; label: string; count: number; dot: string; share?: number; guide: string }[] = [
+    { key: "all", label: "Everyone", count: people.length, dot: "all", guide: "Shows everyone on the list." },
+    ...LEAD_CATS.map((c) => {
+      const n = people.filter((p) => edits.cat(p, c)).length;
+      return { key: c, label: LEAD_CAT_LABEL[c], count: n, dot: `cat-${c}`, share: of(n), guide: `Shows the people marked ${LEAD_CAT_LABEL[c].toLowerCase()}.` };
+    }),
+    { key: "unassigned", label: "Unassigned", count: unassigned, dot: "idle", share: of(unassigned), guide: "Shows the people nobody looks after yet." },
   ];
   if (removedCount > 0) {
     tiles.push({ key: "removed", label: "Removed", count: removedCount, dot: "gone", guide: "Shows the people taken off the list; nothing of theirs is deleted and they can come back." });
@@ -252,16 +253,17 @@ export function PeopleView({
   const showingRemoved = filter === "removed";
 
   let rows = people.filter((p) => {
-    if (filter === "signed") return signedUp(p);
-    if (filter === "added") return !signedUp(p);
+    if ((LEAD_CATS as readonly string[]).includes(filter)) return edits.cat(p, filter as LeadCat);
+    if (filter === "unassigned") return !edits.owner(p);
     return true;
   });
+  if (ownerF === UNASSIGNED) rows = rows.filter((p) => !edits.owner(p));
+  else if (ownerF) rows = rows.filter((p) => edits.owner(p) === ownerF);
   rows = rows.filter(matches);
   const sorters: Record<string, (a: AdminPerson, b: AdminPerson) => number> = {
     name: (a, b) => a.name.localeCompare(b.name),
-    status: (a, b) => Number(signedUp(b)) - Number(signedUp(a)) || a.name.localeCompare(b.name),
-    registered: (a, b) => (a.registeredAt ?? "~").localeCompare(b.registeredAt ?? "~") || a.name.localeCompare(b.name),
-    email: (a, b) => (a.regEmail ?? "~").localeCompare(b.regEmail ?? "~") || a.name.localeCompare(b.name),
+    // The unassigned last, whichever way the list runs.
+    owner: (a, b) => (edits.owner(a) ?? "￿").localeCompare(edits.owner(b) ?? "￿") || a.name.localeCompare(b.name),
   };
   rows = [...rows].sort((a, b) => (sorters[sort] || sorters.name)(a, b) * dir);
 
@@ -270,35 +272,36 @@ export function PeopleView({
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const subOf = (p: AdminPerson) => [p.rawTitle, p.company].filter(Boolean).join(" · ");
-
-  /** Name, face, chips: the part of a card that is its button. */
-  const who = (p: AdminPerson) => (
-    <button type="button" className="prow-open" onClick={() => openPerson(p.id)}>
-      <span aria-hidden>
-        <Avatar person={p} size={38} />
-      </span>
-      <span className="prow-who">
-        <b>
-          <span className="nm">{p.name}</span>
-          {p.isTeam ? <span className="ppl-chip host">Host</span> : null}
-        </b>
-        {subOf(p) ? <span>{subOf(p)}</span> : null}
-      </span>
-    </button>
-  );
+  const sortKey = sorters[sort] ? sort : "name";
 
   const emptyLine = q
     ? `Nobody matches “${query.trim()}”.`
-    : filter === "signed"
-      ? "Nobody has signed up and been confirmed yet."
-      : filter === "added"
-        ? "You have not added anyone yourself."
-        : "";
+    : filter === "unassigned"
+      ? "Everyone has an owner."
+      : (LEAD_CATS as readonly string[]).includes(filter)
+        ? `Nobody is marked ${LEAD_CAT_LABEL[filter as LeadCat].toLowerCase()} yet.`
+        : ownerF
+          ? "Nobody has this owner."
+          : "";
+
+  const head = (key: string, label: string, className?: string) => (
+    <th className={className} aria-sort={sortKey === key ? (dir === 1 ? "ascending" : "descending") : undefined}>
+      <button
+        type="button"
+        className={cx("lt-sort", sortKey === key && "on")}
+        onClick={() => onSort(key)}
+        data-guide={`Sorts the list by ${label.toLowerCase()}; press again to reverse it.`}
+      >
+        {label}
+        {sortKey === key ? <i aria-hidden>{dir === 1 ? "▲" : "▼"}</i> : null}
+      </button>
+    </th>
+  );
 
   return (
     <div>
       {/* The counts, which are also the filters. */}
-      <div className="ppl-tiles" role="tablist" aria-label="Show">
+      <div className="ppl-tiles lead-tiles" role="tablist" aria-label="Show">
         <AnimatePresence initial={false}>
           {tiles.map((t) => {
             const on = filter === t.key || (t.key === "all" && !tiles.some((x) => x.key === filter));
@@ -328,7 +331,6 @@ export function PeopleView({
                 </span>
                 <span className="ppl-tile-n">
                   <b key={t.count}>{t.count}</b>
-                  {t.of ? <small>of {t.of}</small> : null}
                 </span>
                 {t.share !== undefined ? (
                   <span className="ppl-tile-bar" aria-hidden>
@@ -352,39 +354,37 @@ export function PeopleView({
             className="fld"
             value={query}
             onChange={(e) => onQuery(e.target.value)}
-            placeholder="Search by name, company, email or phone"
-            aria-label="Search people"
+            placeholder="Search by name, company, email, owner or next action"
+            aria-label="Search leads"
           />
         </label>
-        <Btn href={exportHref} data-guide="Downloads everyone on the list as a spreadsheet.">
+        {showingRemoved ? null : (
+          <select
+            className={cx("lead-ownerf", ownerF && "on")}
+            value={ownerF}
+            onChange={(e) => setOwnerF(e.target.value)}
+            aria-label="Show the leads of"
+            data-guide="Shows only the leads one person looks after."
+          >
+            <option value="">All owners</option>
+            <option value={UNASSIGNED}>Unassigned</option>
+            {ownerNames.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        )}
+        <Btn onClick={openOwners} data-action="owners" data-guide="Opens the list of owners: the names the Owner drop-downs offer.">
+          Owners{owners.length ? <em className="lead-btnn">{owners.length}</em> : null}
+        </Btn>
+        <Btn href={exportHref} data-guide="Downloads everyone on the list as a spreadsheet, with their steps, categories, owner and next action.">
           Export
         </Btn>
-        <Btn
-          tone="primary"
-          onClick={() => setAddOpen(true)}
-          data-action="add-someone"
-          data-guide="Opens a panel to add one person or a list."
-        >
+        <Btn tone="primary" onClick={() => setAddOpen(true)} data-action="add-someone" data-guide="Opens a panel to add one person or a list.">
           + Add someone
         </Btn>
       </div>
-
-      {/* Sign-ups waiting on the Registration page: a pointer, not a list. */}
-      <AnimatePresence initial={false}>
-        {waiting > 0 ? (
-          <motion.div key="waiting" {...fold} transition={spring.smooth} style={{ overflow: "hidden" }}>
-            <div className="ppl-wait">
-              <i className="ppl-dot wait" aria-hidden />
-              <span>
-                <b>{waiting}</b> sign-up{waiting === 1 ? "" : "s"} waiting for you
-              </span>
-              <LinkBtn tone="blue" onClick={openRegistrationPage}>
-                Registration page ›
-              </LinkBtn>
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
 
       <div key={showingRemoved ? "removed" : "list"} className="ppl-tabin">
         {showingRemoved ? (
@@ -413,17 +413,22 @@ export function PeopleView({
                   <motion.div key={p.id} role="listitem" className="ppl-slot" {...rowMotion}>
                     <div className="prow is-removed" data-person-row="">
                       <span className="prow-sheen" aria-hidden />
-                      {who(p)}
+                      <button type="button" className="prow-open" onClick={() => openPerson(p.id)}>
+                        <span aria-hidden>
+                          <Avatar person={p} size={38} />
+                        </span>
+                        <span className="prow-who">
+                          <b>
+                            <span className="nm">{p.name}</span>
+                          </b>
+                          {subOf(p) ? <span>{subOf(p)}</span> : null}
+                        </span>
+                      </button>
                       <span className="prow-acts">
                         <Btn sm tone="primary" pending={rowPending(p.id) === "restore"} onClick={() => bringBack(p)} data-guide="Puts them back on the list.">
                           Bring back
                         </Btn>
-                        <Btn
-                          sm
-                          tone="care"
-                          onClick={() => askPurge(p.id)}
-                          data-guide="Erases them and their details, after a typed word; this cannot be undone."
-                        >
+                        <Btn sm tone="care" onClick={() => askPurge(p.id)} data-guide="Erases them and their details, after a typed word; this cannot be undone.">
                           Delete for good
                         </Btn>
                       </span>
@@ -443,100 +448,105 @@ export function PeopleView({
             ) : null}
           </>
         ) : (
-          <>
-            <div className="ppl-list" role="list" aria-label="People">
-              <div className="ppl-head">
-                {(
-                  [
-                    ["name", "Person", "c-n"],
-                    ["status", "Status", "c-s"],
-                    ["registered", "Registered", "c-t"],
-                    ["email", "Email", "c-w"],
-                  ] as [string, string, string][]
-                ).map(([key, label, cls]) => (
-                  <span key={key} className={cls}>
-                    <button
-                      type="button"
-                      className={cx(sort === key && "on")}
-                      onClick={() => onSort(key)}
-                      data-guide={`Sorts the list by ${label.toLowerCase()}; press again to reverse it.`}
-                    >
-                      {label}
-                      {sort === key ? <i aria-hidden>{dir === 1 ? "▲" : "▼"}</i> : null}
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <AnimatePresence initial={false}>
-                {rows.map((p) => {
-                  const viaPage = signedUp(p);
-                  return (
-                    <motion.div key={p.id} role="listitem" className="ppl-slot" {...rowMotion}>
-                      <div className="prow" data-person-row="" data-person-id={p.id}>
-                        <span className="prow-sheen" aria-hidden />
-                        {who(p)}
-                        <span className="prow-st">
-                          <Swap k={viaPage ? "signed" : "added"}>
-                            {viaPage ? (
-                              <StatePill tone="done" title="Came through the registration page; you confirmed them">
-                                Signed up
-                              </StatePill>
-                            ) : (
-                              <StatePill title="You added them here">Added</StatePill>
-                            )}
-                          </Swap>
-                        </span>
-                        <span className="prow-t">{p.registeredAt ? eventDay(p.registeredAt) : <span className="dash">—</span>}</span>
-                        <span className="prow-where" title={p.regEmail ?? undefined} dir="ltr">
-                          {p.regEmail ?? <span className="dash">—</span>}
-                        </span>
-                        <span className="prow-acts">
-                          {viaPage ? (
-                            <Btn
-                              sm
-                              className="ctx"
-                              armed={armBackId === p.id}
-                              pending={rowPending(p.id) === "back"}
-                              onClick={() => tapBack(p.id)}
-                              data-guide="Press twice: sends them back to the Registration page's queue, approved; their seat opens up."
-                            >
-                              {armBackId === p.id ? "Tap again" : "To registration"}
-                            </Btn>
-                          ) : null}
-                          <Btn sm onClick={() => openPerson(p.id, true)} data-action="edit" data-guide="Opens their details to change them.">
-                            Edit
-                          </Btn>
-                          <Btn
-                            sm
-                            tone="care"
-                            armed={armDelId === p.id}
-                            pending={rowPending(p.id) === "remove"}
-                            onClick={() => tapDelete(p.id)}
-                            data-action="remove"
-                            data-guide="Press twice: takes them off the list; nothing of theirs is deleted and Removed brings them back."
-                          >
-                            {armDelId === p.id ? "Tap again" : "Remove"}
-                          </Btn>
-                        </span>
-                        <span className="prow-go" aria-hidden>
-                          ›
-                        </span>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
+          <div className="card flush lt-card">
+            <div className="regq lt lt-lead">
+              <table>
+                <thead>
+                  <tr>
+                    {head("name", "Person", "lt-who")}
+                    {LEAD_CATS.map((c) => (
+                      <th key={c} className={cx("c", `lt-cat-${c}`)} title={LEAD_CAT_LABEL[c]}>
+                        {CAT_HEAD[c][0]}
+                        <br />
+                        {CAT_HEAD[c][1]}
+                      </th>
+                    ))}
+                    {head("owner", "Owner")}
+                    <th>NEXT ACTION</th>
+                    <th aria-label="Actions" />
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence initial={false}>
+                    {rows.map((p) => {
+                      const st = standing(p);
+                      const first = p.name.split(/\s+/)[0] || p.name;
+                      return (
+                        <motion.tr key={p.id} {...rowMotion} data-person-id={p.id}>
+                          <td className="lt-who">
+                            <button type="button" className="lt-open" onClick={() => openPerson(p.id)} title="Open their record" data-guide="Opens their record.">
+                              <Avatar person={p} size={34} />
+                              <span className="min-w-0">
+                                <b className="lt-name">
+                                  <span className="nm">{p.name}</span>
+                                  {p.isTeam ? <span className="ppl-chip host">Host</span> : null}
+                                  <span className={cx("lchip", st.tone)} title={st.title}>
+                                    {st.word}
+                                  </span>
+                                </b>
+                                {subOf(p) ? <span className="block text-meta text-muted">{subOf(p)}</span> : null}
+                              </span>
+                            </button>
+                          </td>
+                          {LEAD_CATS.map((c) => (
+                            <td key={c} className="c">
+                              <Tick
+                                tone={c}
+                                on={edits.cat(p, c)}
+                                onClick={() => edits.setCat(p, c, !edits.cat(p, c))}
+                                label={`${first}: ${LEAD_CAT_LABEL[c]}`}
+                                data-guide={`Marks them as a ${LEAD_CAT_LABEL[c].toLowerCase()}; a person can hold several.`}
+                              />
+                            </td>
+                          ))}
+                          <td>
+                            <OwnerSelect
+                              value={edits.owner(p)}
+                              owners={owners}
+                              onChange={(o) => edits.setOwner(p, o)}
+                              onAddOwner={openOwners}
+                              label={`Owner of ${p.name}`}
+                            />
+                          </td>
+                          <td>
+                            <NextAction value={p.lead.next} onSave={(v) => edits.setNext(p, v)} label={`Next action for ${p.name}`} />
+                          </td>
+                          <td>
+                            <div className="regacts">
+                              <Btn sm onClick={() => openPerson(p.id, true)} data-action="edit" data-guide="Opens their details to change them.">
+                                Edit
+                              </Btn>
+                              <Btn
+                                sm
+                                tone="care"
+                                className="regarm"
+                                armed={armDelId === p.id}
+                                pending={rowPending(p.id) === "remove"}
+                                onClick={() => tapDelete(p.id)}
+                                data-action="remove"
+                                data-guide="Press twice: takes them off the list; nothing of theirs is deleted and Removed brings them back."
+                              >
+                                {armDelId === p.id ? "Tap again" : "Remove"}
+                              </Btn>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </AnimatePresence>
+                </tbody>
+              </table>
             </div>
             {!rows.length ? (
               people.length ? (
-                <div className="ppl-empty">
+                <div className="lt-empty">
                   <b>{q ? "Nobody matches" : "Nobody here"}</b>
                   {emptyLine}
                 </div>
               ) : (
-                <div className="ppl-empty">
+                <div className="lt-empty">
                   <b>Nobody on the list yet</b>
-                  Add someone, or confirm a sign-up on the Registration page.
+                  Sign-ups arrive here from the public page, or add someone yourself.
                   <div>
                     <Btn tone="primary" onClick={() => setAddOpen(true)}>
                       + Add someone
@@ -545,11 +555,12 @@ export function PeopleView({
                 </div>
               )
             ) : (
-              <p className="ppl-foot">
+              <p className="lt-foot">
                 {rows.length === people.length ? `${people.length} on the list` : `${rows.length} of ${people.length}`}
+                {unassigned ? ` · ${unassigned} unassigned` : ""}
               </p>
             )}
-          </>
+          </div>
         )}
       </div>
 

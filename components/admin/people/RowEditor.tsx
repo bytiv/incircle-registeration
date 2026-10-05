@@ -184,7 +184,7 @@ export function RowEditor({
           tone="care"
           armed={armed}
           onClick={onDelete}
-          data-guide="Press twice: takes them off the list; nothing of theirs is deleted and People › Removed brings them back."
+          data-guide="Press twice: takes them off the list; nothing of theirs is deleted and Lead management › Removed brings them back."
         >
           {armed ? "Tap again to remove" : "Remove"}
         </Btn>

@@ -1,10 +1,13 @@
 import type { AdminPerson, AdminSnapshot } from "@/lib/admin/model";
 import { EVENT_TZ } from "@/lib/env";
+import { LEAD_CAT_LABEL, LEAD_CATS, STEP_KEYS, STEP_LABEL } from "@/lib/leads";
 import { ATTENDEE_LABEL, REG_STATUS_LABEL } from "@/lib/registration";
 
 /**
- * EXPORT CSV — People's EXPORT button (/api/admin/export): everyone on the
- * list, the sign-ups still waiting included, with what they registered with.
+ * EXPORT CSV — Lead management's EXPORT button (/api/admin/export): everyone on
+ * the list, the sign-ups not confirmed yet included, with what they registered
+ * with and what the team recorded (the contact steps, the categories, the owner,
+ * the next action — lib/leads.ts).
  *
  * CIB's lib/admin/exportCsv.ts builds the same kind of file around the night:
  * check-in, the last screen, a column group per moment. Before the event there
@@ -52,6 +55,13 @@ export const COLUMNS: Column[] = [
   { head: "Attendee", cell: (p) => (p.attendee ? ATTENDEE_LABEL[p.attendee] : "") },
   { head: "Registered", cell: (p) => stamp(p.registeredAt) },
   { head: "Code", cell: (p) => p.code ?? "" },
+  // Registrations' four ticks — the last one is the seat itself. Only a sign-up walks them.
+  ...STEP_KEYS.map((k): Column => ({ head: STEP_LABEL[k], cell: (p) => (p.lead.steps[k] ? "Yes" : "") })),
+  { head: "Confirmed", cell: (p) => (p.regStatus === "confirmed" ? "Yes" : "") },
+  // Lead management.
+  ...LEAD_CATS.map((c): Column => ({ head: LEAD_CAT_LABEL[c], cell: (p) => (p.lead.cats.includes(c) ? "Yes" : "") })),
+  { head: "Owner", cell: (p) => p.lead.owner ?? "" },
+  { head: "Next action", cell: (p) => p.lead.next },
 ];
 
 /**

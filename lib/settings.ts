@@ -1,3 +1,4 @@
+import { cleanOwners } from "@/lib/leads";
 import { DEFAULT_FIELD_ORDER, isRegFieldKey, LOCKED_FIELDS, type RegFieldKey } from "@/lib/regFields";
 import { DEFAULT_PAGE, normalizePage, type SitePage } from "@/lib/sitePage";
 
@@ -43,6 +44,11 @@ export type EventSettings = {
    * edited on the page by a signed-in host. One value: a page is saved whole.
    */
   reg_page?: SitePage;
+  /**
+   * LEAD MANAGEMENT'S OWNERS — the names every Owner drop-down offers (lib/leads.ts), edited
+   * from Lead management's OWNERS. InCircle's own key, not CIB's.
+   */
+  lead_owners?: string[];
 };
 
 export const SETTINGS_DEFAULTS: Required<EventSettings> = {
@@ -52,6 +58,8 @@ export const SETTINGS_DEFAULTS: Required<EventSettings> = {
   reg_capacity: 0,
   reg_fields: DEFAULT_FIELD_ORDER,
   reg_page: DEFAULT_PAGE,
+  // Nobody yet: the team writes its own list.
+  lead_owners: [],
 };
 
 /** Returns the normalized value, or undefined when the input is unusable. */
@@ -90,6 +98,7 @@ export const SETTING_RULES: Record<keyof EventSettings, SettingRule> = {
   reg_capacity: intBetween(0, 10000),
   reg_fields: regFieldList,
   reg_page: normalizePage,
+  lead_owners: cleanOwners,
 };
 
 /**

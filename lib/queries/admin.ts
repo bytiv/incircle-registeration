@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { AdminPerson, AdminSnapshot } from "@/lib/admin/model";
+import { leadOf } from "@/lib/leads";
 import { isAttendeeKind } from "@/lib/registration";
 import { EVENT_TZ } from "@/lib/env";
 import { resolveEvent } from "@/lib/queries/eventRef";
@@ -125,6 +126,7 @@ export async function getAdminData(): Promise<{ ok: true; data: AdminShellData }
       company: r.company ?? null,
       regEmail: r.email ?? null,
       attendee: isAttendeeKind(r.profile?.attendee) ? r.profile.attendee : null,
+      lead: leadOf(r.profile),
       phone: r.phone ?? null,
       registeredAt: r.registered_at ?? null,
       removed: r.removed_at !== null,

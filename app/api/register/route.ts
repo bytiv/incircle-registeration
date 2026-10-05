@@ -121,14 +121,65 @@ export async function POST(request: Request) {
   const full = registrationFull(capacity, seated ?? 0);
   const approve = getSetting(state, "reg_approve");
 
-  const slug = await uniqueSlug(supabase, event.id, slugify(name));
+  const base = slugify(name);
+  const [slot] = await nextBubbleSlots(supabase, event.id, 1);
+  const row = {
+    event_id: event.id,
+    full_name: name,
+    slug: await uniqueSlug(supabase, event.id, base),
+    title: title || null,
+    role: "member" as const,
+    linkedin_url: linkedin || null,
+    verify_code: verifyCode(),
+    added_by_host: false,
+    // A full room queues everyone as New whatever the approval rule says.
+    reg_status: (full || approve ? "new" : "approved") as "new" | "approved",
+    company: company || null,
+    email,
+    phone: phone || null,
+    registered_at: new Date().toISOString(),
+    ...(attendee ? { profile: { attendee } } : {}),
+    ...slot,
+  };
+
+  /*
+   * THE SIGN-UP ITSELF, FIRST. Its slug is unique per event and is also its photo's file name, so
+   * the seat claims it before anything else is written. Two people with the same name pressing
+   * Register in the same second used to lose one of them here (one retry, then "already
+   * registered"), and could end up sharing one photo file: a clash is now tried again with a
+   * fresh slug, then with a random tail, and nobody is turned away for having a common name. From
+   * here on the registration is kept, whatever happens to the photo or the directory below.
+   */
+  let seat: { id: string } | null = null;
+  let error: { code?: string; message: string } | null = null;
+  for (let attempt = 0; attempt < 6 && !seat; attempt += 1) {
+    const res = await supabase.from("attendees").insert(row).select("id").single();
+    if (!res.error) {
+      seat = res.data;
+      break;
+    }
+    error = res.error;
+    if (res.error.code !== "23505" || !/slug/i.test(res.error.message)) break;
+    row.slug = attempt < 2 ? await uniqueSlug(supabase, event.id, base) : `${base}_${Math.random().toString(36).slice(2, 7)}`;
+  }
+  if (!seat) {
+    if (error?.code === "23505") {
+      return NextResponse.json({ error: "This address is already registered." }, { status: 409 });
+    }
+    if (error && (error.code === "42703" || /reg_status|registered_at|profile/.test(error.message))) {
+      console.error("[incircle] /api/register: run supabase/01_schema.sql —", error.message);
+      return NextResponse.json({ error: "Registration is not set up yet." }, { status: 503 });
+    }
+    return NextResponse.json({ error: error?.message ?? "That did not go through." }, { status: 500 });
+  }
+
+  /* The photo, under the slug the seat now owns — never over somebody else's file. */
   let photoPath: string | null = null;
   if (hasPhoto && body.photo) {
     // A photo that will not save is not a reason to lose the registration.
-    const saved = await saveFacePhoto(supabase, { eventId: event.id, slug, dataUrl: body.photo });
+    const saved = await saveFacePhoto(supabase, { eventId: event.id, slug: row.slug, dataUrl: body.photo });
     photoPath = saved.ok ? saved.path : null;
   }
-  const [slot] = await nextBubbleSlots(supabase, event.id, 1);
 
   /*
    * The DIRECTORY (`people`): the address is the key across events, so
@@ -145,41 +196,13 @@ export async function POST(request: Request) {
     photoPath,
     phone,
   });
-
-  const row = {
-    event_id: event.id,
-    full_name: name,
-    slug,
-    title: title || null,
-    role: "member" as const,
-    photo_path: photoPath,
-    linkedin_url: linkedin || null,
-    verify_code: verifyCode(),
-    added_by_host: false,
-    // A full room queues everyone as New whatever the approval rule says.
-    reg_status: (full || approve ? "new" : "approved") as "new" | "approved",
-    company: company || null,
-    email,
-    phone: phone || null,
-    registered_at: new Date().toISOString(),
-    ...(attendee ? { profile: { attendee } } : {}),
-    ...(personId ? { person_id: personId } : {}),
-    ...slot,
-  };
-  let { error } = await supabase.from("attendees").insert(row);
-  if (error?.code === "23505" && /slug/i.test(error.message)) {
-    row.slug = await uniqueSlug(supabase, event.id, slugify(name));
-    ({ error } = await supabase.from("attendees").insert(row));
-  }
-  if (error) {
-    if (error.code === "23505") {
-      return NextResponse.json({ error: "This address is already registered." }, { status: 409 });
-    }
-    if (error.code === "42703" || /reg_status|registered_at|profile/.test(error.message)) {
-      console.error("[incircle] /api/register: run supabase/01_schema.sql —", error.message);
-      return NextResponse.json({ error: "Registration is not set up yet." }, { status: 503 });
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (photoPath || personId) {
+    const { error: linkError } = await supabase
+      .from("attendees")
+      .update({ ...(photoPath ? { photo_path: photoPath } : {}), ...(personId ? { person_id: personId } : {}) })
+      .eq("id", seat.id);
+    // The sign-up is saved; only its photo or directory link is missing. Logged, not refused.
+    if (linkError) console.error("[incircle] /api/register: the photo / directory link did not save —", linkError.message);
   }
   await bumpRosterSeq(supabase, event.id);
   return NextResponse.json({ ok: true, waitlist: full, approve });

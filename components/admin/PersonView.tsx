@@ -1,28 +1,32 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
 import type { Layout } from "@/components/admin/AdminShell";
+import { NextAction, OwnerSelect, Progress, Tick, useLeadEdits, type LeadWrites } from "@/components/admin/lead";
 import { usePageScrollLock } from "@/components/admin/people/bits";
 import { RowEditor } from "@/components/admin/people/RowEditor";
 import type { PersonPatch } from "@/components/admin/people/types";
-import { Avatar, Btn, StatePill } from "@/components/admin/ui";
+import { Avatar, Btn, cx, StatePill } from "@/components/admin/ui";
 import type { AdminPerson } from "@/lib/admin/model";
+import { LEAD_CAT_LABEL, LEAD_CATS, STEP_KEYS, STEP_LABEL } from "@/lib/leads";
 import { ATTENDEE_LABEL } from "@/lib/registration";
 import { spring } from "@/lib/motion";
 
 /**
- * One person, in the drawer over People (and over the Registration page).
+ * One person, in the drawer over Lead management (and over Registrations).
  *
  * Two faces, one at a time. THEIR PROFILE: the brand band with their face on a
- * white ring, their name and where they stand, then calm cards — how they are
- * on the list, and what they registered with. EDIT THEIR DETAILS: the same
- * form Add someone uses (RowEditor). CIB's event-day cards (device, check-in,
- * every event they came to) wait for the event app.
+ * white ring, their name and where they stand, then calm cards — a sign-up's
+ * four steps (MESSAGE · CALL · CALENDAR · CONFIRMED), their lead (categories,
+ * owner, next action — lib/leads.ts), how they are on the list, and what they
+ * registered with. EDIT THEIR DETAILS: the same form Add someone uses
+ * (RowEditor). CIB's event-day cards (device, check-in, every event they came
+ * to) wait for the event app.
  *
- * A sub-view, not a tab: it is opened from a People row, and the rail keeps
- * People highlighted while it is up.
+ * A sub-view, not a tab: it is opened from a row, and the rail keeps the page
+ * it was opened from highlighted while it is up.
  */
 
 export type PersonProps = {
@@ -41,9 +45,15 @@ export type PersonProps = {
   lastError: string;
   /** Resolves once the saved person is on screen; null when it failed. */
   onEdit: (id: string, patch: PersonPatch) => Promise<unknown>;
-  /** Off the list (reversible under People › Removed). The drawer closes with them. Null when it failed. */
+  /** Off the list (reversible under Lead management › Removed). The drawer closes with them. Null when it failed. */
   onRemove: (id: string) => Promise<unknown>;
   back: () => void;
+  /** The names the Owner drop-down offers (the `lead_owners` setting). */
+  owners: string[];
+  /** Opens the owners list. */
+  openOwners: () => void;
+  /** Their steps, categories, owner and next action. */
+  writes: LeadWrites;
 };
 
 /** A face of the drawer arriving: up and in, on the smooth spring. */
@@ -53,7 +63,7 @@ const face = {
   exit: { opacity: 0, y: -4, transition: { duration: 0.12 } },
 } as const;
 
-export function PersonView({ person: p, editing, setEditing, lastError, onEdit, onRemove, back }: PersonProps) {
+export function PersonView({ person: p, editing, setEditing, lastError, onEdit, onRemove, back, owners, openOwners, writes }: PersonProps) {
   // Mounted only while somebody is open: the list behind stays where it was.
   usePageScrollLock(true);
 
@@ -82,7 +92,7 @@ export function PersonView({ person: p, editing, setEditing, lastError, onEdit, 
           </motion.div>
         ) : (
           <motion.div key="view" className="pv-mode" {...face}>
-            <Profile p={p} back={back} edit={() => setEditing(true)} />
+            <Profile p={p} back={back} edit={() => setEditing(true)} owners={owners} openOwners={openOwners} writes={writes} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -92,15 +102,30 @@ export function PersonView({ person: p, editing, setEditing, lastError, onEdit, 
 
 /** Where they stand: the pill under their name. */
 function standing(p: AdminPerson): { word: string; tone: "done" | "held" | "" } {
-  if (p.regStatus === "confirmed") return { word: "Signed up", tone: "done" };
-  if (p.regStatus === "approved") return { word: "Approved · not confirmed", tone: "" };
-  if (p.regStatus === "new") return { word: "New · waiting for approval", tone: "held" };
+  if (p.regStatus === "confirmed") return { word: "Confirmed", tone: "done" };
+  if (p.regStatus) return { word: "Registered · not confirmed", tone: "held" };
   return { word: "Added by you", tone: "" };
 }
 
-function Profile({ p, back, edit }: { p: AdminPerson; back: () => void; edit: () => void }) {
+function Profile({
+  p,
+  back,
+  edit,
+  owners,
+  openOwners,
+  writes,
+}: {
+  p: AdminPerson;
+  back: () => void;
+  edit: () => void;
+  owners: string[];
+  openOwners: () => void;
+  writes: LeadWrites;
+}) {
   const sub = [p.rawTitle ?? (p.isTeam ? null : p.title), p.company].filter(Boolean).join(" · ");
   const stand = standing(p);
+  const one = useMemo(() => [p], [p]);
+  const edits = useLeadEdits(one, writes);
 
   /* design:1634-1639 — the code they will confirm with at the event. */
   const facts: { label: string; value: string }[] = [];
@@ -116,7 +141,7 @@ function Profile({ p, back, edit }: { p: AdminPerson; back: () => void; edit: ()
       ? [
           {
             label: "Status",
-            value: p.regStatus === "new" ? "New · waiting for approval" : p.regStatus === "approved" ? "Approved" : "Confirmed",
+            value: p.regStatus === "confirmed" ? "Confirmed" : "Registered · not confirmed yet",
           },
           { label: "Email", value: p.regEmail },
           { label: "Company", value: p.company },
@@ -136,7 +161,7 @@ function Profile({ p, back, edit }: { p: AdminPerson; back: () => void; edit: ()
       <section className="pv-hero">
         <div className="pv-bar">
           <button type="button" className="pv-back" onClick={back}>
-            ← All people
+            ← Back
           </button>
           <Btn sm onClick={edit} data-action="edit-person" data-guide="Opens the form to change their name, photo, title and code.">
             Edit details
@@ -177,6 +202,61 @@ function Profile({ p, back, edit }: { p: AdminPerson; back: () => void; edit: ()
       </section>
 
       <div className="pv-body">
+        {/* A sign-up's four steps (Registrations): the last is their seat. */}
+        {p.regStatus !== null ? (
+          <div className="card lcard">
+            <div className="lcard-head">
+              <div className="lb">FOUR STEPS</div>
+              <Progress done={edits.done(p)} />
+            </div>
+            {STEP_KEYS.map((k) => (
+              <div className="lrowk lstep" key={k}>
+                <span className="kk">{STEP_LABEL[k]}</span>
+                <span className="vv">
+                  <Tick on={edits.step(p, k)} onClick={() => edits.setStep(p, k, !edits.step(p, k))} label={STEP_LABEL[k]} />
+                </span>
+              </div>
+            ))}
+            <div className="lrowk lstep">
+              <span className="kk">
+                Confirmed
+                <small>They hold a seat</small>
+              </span>
+              <span className="vv">
+                <Tick tone="seat" on={edits.confirmed(p)} onClick={() => edits.setConfirmed(p, !edits.confirmed(p))} label="Confirmed" />
+              </span>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Their lead (Lead management): categories, who looks after them, what is next. */}
+        <div className="card lcard">
+          <div className="lb">LEAD</div>
+          <div className="lcats" role="group" aria-label="Categories">
+            {LEAD_CATS.map((c) => {
+              const on = edits.cat(p, c);
+              return (
+                <button key={c} type="button" className={cx("lcat", `t-${c}`, on && "on")} aria-pressed={on} onClick={() => edits.setCat(p, c, !on)}>
+                  {on ? "✓ " : ""}
+                  {LEAD_CAT_LABEL[c]}
+                </button>
+              );
+            })}
+          </div>
+          <div className="lrowk">
+            <span className="kk">Owner</span>
+            <span className="vv">
+              <OwnerSelect value={edits.owner(p)} owners={owners} onChange={(o) => edits.setOwner(p, o)} onAddOwner={openOwners} label="Owner" />
+            </span>
+          </div>
+          <div className="lrowk lnextrow">
+            <span className="kk">Next action</span>
+            <span className="vv">
+              <NextAction value={p.lead.next} onSave={(v) => edits.setNext(p, v)} label="Next action" />
+            </span>
+          </div>
+        </div>
+
         <div className="card">
           <div className="lb">ON THE LIST</div>
           {rows.map((r) => (

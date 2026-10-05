@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { isUnlocked } from "@/lib/admin/auth";
 import { bumpRosterSeq, nextBubbleSlots, slugify, uniqueSlug, verifyCode } from "@/lib/admin/roster";
 import { ZERO_PERSON_IMPACT } from "@/lib/admin/runs";
+import { applyLead, cleanLeadPatch, leadOf, profileFilter, sameLead, withLead } from "@/lib/leads";
 import type { RegStatus } from "@/lib/registration";
 import { resolveEvent } from "@/lib/queries/eventRef";
 import { findOrCreatePerson, syncPerson } from "@/lib/queries/people";
@@ -83,6 +84,8 @@ type Body = {
   confirm?: boolean;
   /** `regStatus` only — where in the sign-up pipeline this person now is; null = invited. */
   status?: string | null;
+  /** `lead` only — the one change to their lead (lib/leads.ts LeadPatch), checked here. */
+  patch?: unknown;
 };
 
 /** The column CHECK, restated so a bad role is a 400 and not a 500. */
@@ -245,7 +248,64 @@ export async function POST(request: Request) {
           { status: missing ? 409 : 500 },
         );
       }
+      // Seats changed: another open control room re-reads the list.
+      await bumpRosterSeq(supabase, event.id);
       return NextResponse.json({ ok: true });
+    }
+
+    /*
+     * LEAD MANAGEMENT (lib/leads.ts) — one change to what the team records about a person:
+     * a contact step, a category, the owner, the next action. Saved inside `attendees.profile`
+     * (CIB's own jsonb; no table change), every other key of it kept as it was.
+     *
+     * THE WRITE IS CONDITIONAL on the record it was read from: the update only lands where
+     * `profile` still equals what was read (jsonb equality), so two changes to one person in flight
+     * — two ticks pressed together, two teammates on two screens — can never overwrite each
+     * other. When the record moved in between, it is read again and the change made again.
+     */
+    case "lead": {
+      if (!body.id) return NextResponse.json({ error: "An id is required." }, { status: 400 });
+      const patch = cleanLeadPatch(body.patch);
+      if (!patch) return NextResponse.json({ error: "That change is not one this list knows." }, { status: 400 });
+      for (let attempt = 0; attempt < 12; attempt += 1) {
+        // After a clash, a short random pause, so writers that clashed do not clash again in step.
+        if (attempt > 0) await new Promise((r) => setTimeout(r, 15 + Math.random() * 35 * attempt));
+        const { data: row, error } = await supabase
+          .from("attendees")
+          .select("profile")
+          .eq("id", body.id)
+          .eq("event_id", event.id)
+          .maybeSingle();
+        if (error) {
+          const missing = error.code === "42703" || /profile/.test(error.message);
+          return NextResponse.json(
+            { error: missing ? "Run supabase/01_schema.sql — the list needs its profile column." : error.message },
+            { status: missing ? 409 : 500 },
+          );
+        }
+        if (!row) return NextResponse.json({ error: "That person is not on this event's list." }, { status: 404 });
+        const before = (row.profile ?? {}) as Record<string, unknown>;
+        const was = leadOf(before);
+        const lead = applyLead(was, patch);
+        if (sameLead(lead, was)) return NextResponse.json({ ok: true, changed: false });
+        const { data: written, error: writeError } = await supabase
+          .from("attendees")
+          .update({ profile: withLead(before, lead) })
+          .eq("id", body.id)
+          .eq("event_id", event.id)
+          // supabase-js writes a filter's value into the URL as text (`eq.${value}`), so the JSON
+          // text is what goes (lib/leads.ts profileFilter); PostgREST compares it as jsonb, where
+          // key order does not matter.
+          .eq("profile", profileFilter(before) as unknown as Record<string, unknown>)
+          .select("id");
+        if (writeError) return NextResponse.json({ error: writeError.message }, { status: 500 });
+        if (written?.length) {
+          await bumpRosterSeq(supabase, event.id);
+          return NextResponse.json({ ok: true, changed: true });
+        }
+        // Their record changed between the read and the write: read it again.
+      }
+      return NextResponse.json({ error: "Their record kept changing under this edit. Try again." }, { status: 409 });
     }
 
     /** design:494-503 — "Name, Role" per line. */

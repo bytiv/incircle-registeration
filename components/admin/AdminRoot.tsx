@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 
 import { AdminShell, type Layout, type NavGroup } from "@/components/admin/AdminShell";
+import { OwnersSheet, type LeadWrites } from "@/components/admin/lead";
 import { PeopleView } from "@/components/admin/PeopleView";
 import { PersonView } from "@/components/admin/PersonView";
+import { RegistrationsView } from "@/components/admin/RegistrationsView";
 import { RegistrationView } from "@/components/admin/RegistrationView";
 import { SettingsView } from "@/components/admin/SettingsView";
 import { Drawer } from "@/components/admin/ui";
@@ -15,26 +17,29 @@ import type { PersonAsk } from "@/lib/admin/runs";
 import { useAdminEventState, type Press, type RoomAnswer } from "@/lib/admin/useAdminEventState";
 import { fold, spring } from "@/lib/motion";
 import { oneAtATime } from "@/lib/roomSync";
-import { holdsSeat, registrationCapacity, type RegStatus } from "@/lib/registration";
+import { holdsSeat, registrationCapacity } from "@/lib/registration";
 import type { AdminShellData } from "@/lib/queries/admin";
+import { getSetting } from "@/lib/settings";
 
 /**
  * The control room. Everything below the passcode.
  *
  * CIB's control room, cut to registration: the rail's PRE EVENT pages —
- * Registration page (the public page, edited where it shows, and the sign-ups
- * waiting for you) and People (everyone who is coming) — and Settings. CIB's
- * Manage events, Build, Run and Results are the event app, which InCircle gets
- * when it moves to CIB's platform.
+ * Registration page (the public page, edited where it shows), Registrations
+ * (everyone who signed up, and their four steps) and Lead management
+ * (everyone on the list as leads: categories, owner, next action; CIB's
+ * People) — and Settings. CIB's Manage events, Build, Run and Results are the
+ * event app, which InCircle gets when it moves to CIB's platform.
  *
  * Settings go out through /api/admin/state, the only thing allowed to write
  * them; the list changes through /api/admin/people. The view is client state,
  * mirrored into the URL (`?v=…`) so a reload lands where the host was.
  */
 
-type View = "regpage" | "people" | "settings";
+/** `people` is Lead management (CIB's People, renamed on the screen only). */
+type View = "regpage" | "registrations" | "people" | "settings";
 
-const VIEWS: View[] = ["regpage", "people", "settings"];
+const VIEWS: View[] = ["regpage", "registrations", "people", "settings"];
 
 /** What app/admin/page.tsx read off the URL — the page to open on. */
 export type InitialView = { v?: string };
@@ -57,12 +62,13 @@ export function AdminRoot({
   const [view, setView] = useState<View>(start);
   const [personId, setPersonId] = useState<string | null>(null);
   const [personEdit, setPersonEdit] = useState(false);
+  const [ownersOpen, setOwnersOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   /** Writes in flight, each until its refreshed render has landed. */
   const [writing, setWriting] = useState(0);
   const [sendError, setSendError] = useState("");
 
-  // The People table's own state.
+  // Lead management's own state.
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("name");
@@ -196,40 +202,92 @@ export function AdminRoot({
   const send = useCallback((press: Press) => post(press), [post]);
 
   /**
+   * One POST to a list route, and nothing else: its answer (null when it failed — the error line
+   * says why), and whether the page must be re-read first (the passcode lapsed). Never rejects.
+   */
+  const writeOnce = useCallback(async (url: string, body: unknown): Promise<{ body: unknown | null; reread: boolean }> => {
+    try {
+      const json = JSON.stringify(body);
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: json,
+        // Small enough to outlive the tab: a save made as it closes still lands (a photo is not).
+        keepalive: json.length < 60_000,
+      });
+      if (res.status === 401) return { body: null, reread: true };
+      if (!res.ok) {
+        const b = (await res.json().catch(() => ({}))) as { error?: string };
+        setSendError(b.error ?? "That did not save.");
+        return { body: null, reread: false };
+      }
+      return { body: (await res.json().catch(() => ({}))) as unknown, reread: false };
+    } catch {
+      setSendError("That did not save.");
+      return { body: null, reread: false };
+    }
+  }, []);
+
+  /*
+   * LEAD EDITS WAIT IN ONE LINE — the steps, the CONFIRMED tick, the categories, the owner, the
+   * next action. Two quick presses on one person reach the server in the order they were made, so
+   * the last one is what stays (the route also refuses to write over a record that changed under
+   * it: app/api/admin/people `lead`). Only the write waits; the refresh after it does not hold up
+   * the next one.
+   */
+  const [leadLine] = useState(oneAtATime);
+
+  /* While anything is still saving, closing the tab asks first, so no press is dropped on the way out. */
+  useEffect(() => {
+    if (writing === 0) return;
+    const onLeave = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onLeave);
+    return () => window.removeEventListener("beforeunload", onLeave);
+  }, [writing]);
+
+  /**
    * People and the editors change rows the server rendered, so the page is re-fetched rather
    * than patched locally — one source of truth. Resolves with the body once the refreshed render
-   * has landed (so nothing comes back showing the old data), null on any failure.
+   * has landed (so nothing comes back showing the old data), null on any failure. `inLine` writes
+   * wait their turn behind the other lead edits.
    */
   const mutate = useCallback(
-    async (url: string, body: unknown): Promise<unknown | null> => {
+    async (url: string, body: unknown, inLine = false): Promise<unknown | null> => {
       setWriting((n) => n + 1);
       setSendError("");
       try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (res.status === 401) {
+        const wrote = await (inLine ? leadLine(() => writeOnce(url, body)) : writeOnce(url, body));
+        if (wrote.reread) {
           await refresh();
           return null;
         }
-        if (!res.ok) {
-          const b = (await res.json().catch(() => ({}))) as { error?: string };
-          setSendError(b.error ?? "That did not save.");
-          return null;
-        }
-        const parsed = (await res.json().catch(() => ({}))) as unknown;
+        if (wrote.body === null) return null;
         await refresh();
-        return parsed;
-      } catch {
-        setSendError("That did not save.");
-        return null;
+        return wrote.body;
       } finally {
         setWriting((n) => n - 1);
       }
     },
-    [refresh],
+    [refresh, writeOnce, leadLine],
+  );
+
+  /** What a lead takes: one change to it, and Registrations' CONFIRMED tick (the seat). */
+  const writes: LeadWrites = useMemo(
+    () => ({
+      onLead: (id, patch) => mutate("/api/admin/people", { action: "lead", id, patch }, true),
+      onConfirm: (id, on) => mutate("/api/admin/people", { action: "regStatus", id, status: on ? "confirmed" : "approved" }, true),
+    }),
+    [mutate],
+  );
+
+  /** The owners list, rewritten from the newest list when its turn comes, so two quick changes both land. */
+  const saveOwners = useCallback(
+    (build: (list: string[]) => string[]) =>
+      send((latest) => ({ type: "setting", key: "lead_owners", value: build(getSetting(latest, "lead_owners")) })),
+    [send],
   );
 
   /**
@@ -278,6 +336,7 @@ export function AdminRoot({
     setNavOpen(false);
     setPersonId(null);
     setPersonEdit(false);
+    setOwnersOpen(false);
     setView(v);
   }, []);
 
@@ -297,16 +356,26 @@ export function AdminRoot({
 
   /* ON THE PUBLIC PAGE is the event's own flag, not a setting. */
   const registrationOpen = initial.event.is_public === true;
+  const signups = useMemo(() => snapshot.people.filter((p) => p.regStatus !== null), [snapshot.people]);
   const regCounts = useMemo(() => {
-    const ppl = snapshot.people;
-    const seated = ppl.filter((p) => holdsSeat(p.regStatus));
+    const confirmed = signups.filter((p) => p.regStatus === "confirmed").length;
     return {
-      registered: ppl.filter((p) => p.regStatus !== null).length,
-      seated: seated.length,
-      invited: seated.filter((p) => p.regStatus === null).length,
-      waiting: ppl.filter((p) => p.regStatus === "new").length,
-      queue: ppl.length - seated.length,
+      /** Everyone who signed up on the page. */
+      registered: signups.length,
+      confirmed,
+      /** Signed up, not confirmed yet. */
+      notConfirmed: signups.length - confirmed,
+      /** Seats held: the invited roster and the confirmed. */
+      seated: snapshot.people.filter((p) => holdsSeat(p.regStatus)).length,
+      everyone: snapshot.people.length,
     };
+  }, [snapshot.people, signups]);
+  const owners = getSetting(state, "lead_owners");
+  /** How many people each owner looks after, for the owners list. */
+  const assigned = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const p of snapshot.people) if (p.lead.owner) m[p.lead.owner] = (m[p.lead.owner] ?? 0) + 1;
+    return m;
   }, [snapshot.people]);
 
   /* The rail: before the doors (InCircle's BEFORE group), and the general page. */
@@ -317,16 +386,25 @@ export function AdminRoot({
         {
           key: "regpage",
           label: "Registration page",
-          // Sign-ups waiting: their number as a peach badge. Otherwise whether the page is up.
-          count: regCounts.queue ? String(regCounts.queue) : registrationOpen ? "LIVE" : "OFF",
-          tone: regCounts.queue ? "warm" : registrationOpen ? "live" : undefined,
+          // Whether the page is up.
+          count: registrationOpen ? "LIVE" : "OFF",
+          tone: registrationOpen ? "live" : undefined,
           on: view === "regpage",
           go: () => go("regpage"),
         },
         {
+          key: "registrations",
+          label: "Registrations",
+          // Sign-ups not confirmed yet: their number as a peach badge. Otherwise how many signed up.
+          count: regCounts.notConfirmed ? String(regCounts.notConfirmed) : regCounts.registered ? String(regCounts.registered) : "",
+          tone: regCounts.notConfirmed ? "warm" : undefined,
+          on: view === "registrations",
+          go: () => go("registrations"),
+        },
+        {
           key: "people",
-          label: "People",
-          count: String(regCounts.seated),
+          label: "Lead management",
+          count: String(regCounts.everyone),
           on: view === "people",
           go: () => go("people"),
         },
@@ -342,17 +420,21 @@ export function AdminRoot({
     regpage: [
       "Registration page",
       registrationOpen
-        ? `On the public page · ${regCounts.queue} waiting for you · ${regCounts.registered} signed up so far`
-        : regCounts.queue
-          ? `Not published · ${regCounts.queue} still waiting for you`
-          : `The public page for ${initial.eventName} · not published`,
+        ? `On the public page · ${regCounts.registered} signed up so far`
+        : `The public page for ${initial.eventName} · not published`,
     ],
-    people: ["People", `Everyone who is coming · ${regCounts.seated} on the list`],
+    registrations: [
+      "Registrations",
+      regCounts.registered
+        ? `Everyone who signed up · ${regCounts.confirmed} confirmed · ${regCounts.notConfirmed} not yet`
+        : "Everyone who signs up on the public page, and their four steps",
+    ],
+    people: ["Lead management", `Everyone who registered, and anyone you add · ${regCounts.everyone} on the list`],
     settings: ["Settings", "The event, the links, and access to this control room"],
   };
   const [viewTitle, viewSub] = titles[view];
 
-  /* On the list, or under People › Removed — a removed person's record still opens. */
+  /* On the list, or under Lead management › Removed — a removed person's record still opens. */
   const selPerson = personId
     ? (snapshot.people.find((p) => p.id === personId) ?? snapshot.removedPeople.find((p) => p.id === personId))
     : null;
@@ -361,7 +443,7 @@ export function AdminRoot({
   const eventState = registrationOpen
     ? { label: "Taking registrations", tone: "live" as const }
     : { label: "Registration closed", tone: "" as const };
-  const roster = { seated: regCounts.seated, capacity: registrationCapacity(state), waiting: regCounts.queue };
+  const roster = { seated: regCounts.seated, capacity: registrationCapacity(state), waiting: regCounts.notConfirmed };
 
   return (
     <AdminShell
@@ -399,11 +481,20 @@ export function AdminRoot({
           publish={(on) => mutate("/api/admin/events", on ? { action: "publish", id: initial.event.id } : { action: "unpublish" })}
           send={send}
           ready
-          counts={regCounts}
-          queue={snapshot.people.filter((p) => !holdsSeat(p.regStatus))}
-          onRegStatus={(id, status: RegStatus | null) => mutate("/api/admin/people", { action: "regStatus", id, status })}
+          seated={regCounts.seated}
+        />
+      )}
+
+      {view === "registrations" && (
+        <RegistrationsView
+          signups={signups}
+          seated={regCounts.seated}
+          capacity={registrationCapacity(state)}
+          ready
+          writes={writes}
           onDecline={(id) => mutate("/api/admin/people", { action: "remove", id })}
           openPerson={openPerson}
+          openRegistrationPage={() => go("regpage")}
         />
       )}
 
@@ -411,10 +502,9 @@ export function AdminRoot({
         <PeopleView
           layout={layout}
           snapshot={snapshot}
-          state={state}
-          waiting={regCounts.queue}
-          openRegistrationPage={() => go("regpage")}
-          onRegStatus={(id, status: RegStatus | null) => mutate("/api/admin/people", { action: "regStatus", id, status })}
+          owners={owners}
+          openOwners={() => setOwnersOpen(true)}
+          writes={writes}
           query={query}
           onQuery={setQuery}
           filter={filter}
@@ -455,8 +545,16 @@ export function AdminRoot({
         />
       )}
 
-      {/* One person, over the list — the mockup's drawer. */}
-      <Drawer open={!!selPerson} onClose={closePerson} wide bare label="Person">
+      {/* One person, over the list — the mockup's drawer. (Escape over the owners list closes only the list.) */}
+      <Drawer
+        open={!!selPerson}
+        onClose={() => {
+          if (!ownersOpen) closePerson();
+        }}
+        wide
+        bare
+        label="Person"
+      >
         {selPerson ? (
           <PersonView
             layout={{ ...layout, nar: true }}
@@ -467,9 +565,15 @@ export function AdminRoot({
             onEdit={(id, p) => mutate("/api/admin/people", { action: "edit", id, ...p })}
             onRemove={(id) => mutate("/api/admin/people", { action: "remove", id })}
             back={closePerson}
+            owners={owners}
+            openOwners={() => setOwnersOpen(true)}
+            writes={writes}
           />
         ) : null}
       </Drawer>
+
+      {/* Lead management's owners: the names every Owner drop-down offers. */}
+      <OwnersSheet open={ownersOpen} onClose={() => setOwnersOpen(false)} owners={owners} assigned={assigned} onSave={saveOwners} />
     </AdminShell>
   );
 }

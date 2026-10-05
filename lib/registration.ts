@@ -15,11 +15,16 @@ import type { EventStateRow } from "@/lib/supabase/types";
 
 export { LOCKED_FIELDS, REG_FIELD_KEYS, type RegFieldKey };
 
-/** The pipeline a sign-up walks. NULL on the roster means invited — a confirmed seat. */
+/**
+ * The pipeline a sign-up walks. NULL on the roster means invited — a confirmed seat. Registrations
+ * works it with four ticks (lib/leads.ts): the last, CONFIRMED, is `confirmed`; until it is ticked a
+ * sign-up is `new` (as it arrived) or `approved` (confirmed once, then unticked) — both read as
+ * registered, not confirmed.
+ */
 export type RegStatus = "new" | "approved" | "confirmed";
 export const REG_STATUS_LABEL: Record<RegStatus, string> = {
-  new: "New",
-  approved: "Approved",
+  new: "Registered",
+  approved: "Registered",
   confirmed: "Confirmed",
 };
 
@@ -67,8 +72,8 @@ export const EMAIL_SHAPE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 /**
  * Who holds one of the room's seats: the invited roster (null — never went
- * through the form) and the sign-ups the host confirmed. New and approved
- * sign-ups are the queue on the Registration page, not People, and do not
- * count — the same rule app/api/register uses to decide the room is full.
+ * through the form) and the sign-ups the host confirmed (Registrations'
+ * CONFIRMED tick). Sign-ups not confirmed yet do not count — the same rule
+ * app/api/register uses to decide the room is full.
  */
 export const holdsSeat = (status: RegStatus | null | undefined) => status == null || status === "confirmed";

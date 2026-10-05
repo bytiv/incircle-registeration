@@ -1,4 +1,5 @@
 import { faceStyle, framingOf, type FaceFraming, type FaceStyle } from "@/lib/faceFraming";
+import type { Lead } from "@/lib/leads";
 import type { AttendeeRole } from "@/lib/supabase/types";
 
 /**
@@ -72,6 +73,12 @@ export type AdminPerson = {
   regEmail: string | null;
   /** The form's one choice (attendees.profile.attendee): first time, or been before. Null when not asked. */
   attendee: "first" | "returning" | null;
+  /**
+   * What the team records (attendees.profile.lead, lib/leads.ts): Registrations' contact steps and
+   * Lead management's categories, owner and next action. Never null: nothing recorded reads as
+   * nothing done.
+   */
+  lead: Lead;
   phone: string | null;
   registeredAt: string | null;
   /** Set when the host removed them. They stay in the list so they can come back. */

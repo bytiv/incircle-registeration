@@ -48,7 +48,7 @@ type Props = {
   eventState: { label: string; tone: "live" | "" };
   /** The card opens the event's details (Settings). */
   openEvent: () => void;
-  /** The foot card: seats held, the seat count (0 = no limit), sign-ups waiting. */
+  /** The foot card: seats held, the seat count (0 = no limit), sign-ups not confirmed yet. */
   roster: { seated: number; capacity: number; waiting: number };
   lockAdmin: () => void;
   toggleNav: () => void;
@@ -58,8 +58,9 @@ type Props = {
 
 /** What each page of the rail is for, in the guide's one sentence. */
 const NAV_GUIDE: Record<string, string> = {
-  regpage: "Opens the public sign-up page and the sign-ups waiting for you.",
-  people: "Opens everyone on this event's list, to add, edit or remove people.",
+  regpage: "Opens the public sign-up page: its address, its switch and its seats.",
+  registrations: "Opens everyone who signed up, and their four steps: message, call, calendar, confirmed.",
+  people: "Opens Lead management: everyone on the list, their categories, owner and next action.",
   settings: "Opens the event's name, date and location, the links, and sign-out.",
 };
 
@@ -182,7 +183,7 @@ export function AdminShell({
                   REGISTRATION
                 </div>
                 <div className="kv">
-                  <span>On the list</span>
+                  <span>Seats taken</span>
                   <b>
                     {roster.seated}
                     {roster.capacity > 0 ? <small> / {roster.capacity}</small> : null}
@@ -195,7 +196,7 @@ export function AdminShell({
                 ) : null}
                 {roster.waiting > 0 ? (
                   <div className="w">
-                    {roster.waiting} waiting for you
+                    {roster.waiting} not confirmed yet
                   </div>
                 ) : null}
               </div>
