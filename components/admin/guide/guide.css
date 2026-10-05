@@ -1,0 +1,83 @@
+/* ============================================================================
+   THE GUIDE — components/admin/guide (docs/DESIGN.md §15.6). One small tip for
+   the whole control room, and its switch.
+
+   - The tip is InCircle's ink glass with white words, on the brand's type,
+     lifted on a soft periwinkle shadow. It rises 4px and fades in on the shared tokens
+     (--dur-snappy, --ease-out), from its own side of the control, and fades
+     out the same way. It never takes a click (pointer-events: none).
+   - @layer components, like app/cib.css and app/cib-premium.css, so Tailwind
+     utilities still adjust layout. Class names are new (`guide-…`); nothing of
+     the mockup's is refined here except the switch row inside `.guide-tg`.
+   - Reduced motion: globals.css shortens every transition; here the tip also
+     stops moving and only fades.
+   ============================================================================ */
+
+@layer components {
+
+.guide-tip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 400; /* over the drawers (251), the rail's drawer (260) and the dialogs (300) */
+  width: max-content;
+  max-width: min(260px, calc(100vw - 16px));
+  padding: 8px 12px 9px;
+  border-radius: 14px;
+  background: rgb(26 26 26 / 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--color-white);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-align: start;
+  text-wrap: pretty;
+  -webkit-font-smoothing: antialiased;
+  box-shadow: var(--sheen), var(--elev-3);
+  pointer-events: none;
+  user-select: none;
+  opacity: 0;
+  visibility: hidden;
+  translate: 0 4px;
+  transition:
+    opacity var(--dur-snappy) var(--ease-out),
+    translate var(--dur-snappy) var(--ease-out),
+    visibility 0s linear var(--dur-snappy);
+}
+/* It comes from the control: up when it sits above it, down below it, out to either side. */
+.guide-tip[data-side="bottom"] { translate: 0 -4px; }
+.guide-tip[data-side="right"] { translate: -4px 0; }
+.guide-tip[data-side="left"] { translate: 4px 0; }
+.guide-tip[data-open] {
+  opacity: 1;
+  visibility: visible;
+  translate: 0 0;
+  transition-delay: 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide-tip, .guide-tip[data-side] { translate: none; }
+}
+
+/* ── the switch: the header's small caps GUIDE, and the Settings row's ── */
+.guide-tg { display: inline-flex; flex: none; align-items: center; }
+.guide-tg > .swrow { width: auto; flex: none; padding: 0; border: 0; gap: 10px; }
+.guide-tg > .swrow b { white-space: nowrap; }
+/* quiet while off, InCircle's cyan while on */
+.guide-tg.hd-tg > .swrow b { color: var(--color-muted); transition: color var(--dur-snappy) var(--ease-out); }
+.guide-tg.hd-tg > .swrow[aria-checked="true"] b { color: var(--color-cib-blue); }
+.guide-tg.row > .swrow b { font-size: 12px; font-weight: 600; color: var(--color-text-2); }
+/* Until the stored state has been painted, the knob does not glide into it. */
+.guide-tg:not(.is-ready) .sw,
+.guide-tg:not(.is-ready) .sw u,
+.guide-tg:not(.is-ready) b { transition: none; }
+
+/* A touch screen has no hover: the guide keeps out of the way, switch and all. */
+@media (hover: none) {
+  .guide-tg,
+  .setgroup#guide { display: none; }
+}
+
+}

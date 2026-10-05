@@ -1,0 +1,420 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   InCircle tokens — the palette, type and depth of InCircle's design system
+   (incircle-application: "incircle settings organization/InCircle-Settings.html",
+   Block A foundations), written into the token NAMES the CIB-built screens
+   read. The screens came from CIB's platform; their stylesheets (app/cib.css,
+   app/cib-premium.css) read these variables and nothing else, so InCircle's
+   look starts here, and app/incircle.css adds what a token cannot say (glass,
+   the ramp, pills).
+
+     ink #1A1A1A · body #3D3F40 · sec #5F6467 · muted #8A9093 · soft #9CA2A5
+     cyan #75E2FF · peak #3DE5FF · cyan text #0E93B8 · mint #B5EFDF · mint text #37B893
+     peach #FCB9A9 · warm #B0603F
+     the ramp: #D9E7FB → #C3F2FF → #B4EFFF → #CBF4EC
+
+   The `cib-*` names are kept on purpose (every rule reads them); their values
+   are InCircle's. `--color-cib-blue` is InCircle's cyan text, the accent that
+   marks where you are and what is live.
+   ============================================================================ */
+
+/* hall:bg-… etc. apply inside the stage and inside blue blocks */
+@custom-variant hall (&:where([data-surface="hall"], [data-surface="hall"] *, [data-surface="blue"], [data-surface="blue"] *));
+
+@theme static {
+  --color-*: initial;
+
+  /* the brand: InCircle's accents under the token names the screens read */
+  --color-cib-blue: #0e93b8;        /* cyan text: links, focus, what is on */
+  --color-cib-orange: #fcb9a9;      /* peach: what needs you */
+  --color-cib-grey-dark: #5f6467;
+  --color-cib-grey-light: #e7f4fb;
+  --color-cib-turquoise: #75e2ff;   /* cyan */
+  --color-cib-melon: #fcb9a9;       /* peach */
+  --color-cib-purple: #9ebbf1;      /* periwinkle */
+  --color-cib-olive: #37b893;       /* mint text */
+  --color-cib-brown: #b0603f;       /* warm */
+  --color-cib-mustard: #fcd9a9;
+  --color-cib-lime: #b5efdf;        /* mint */
+
+  /* neutrals */
+  --color-white: #ffffff;
+  --color-ink: #1a1a1a;
+  --color-text-2: #5f6467;
+  --color-muted: #8a9093;
+  --color-faint: #a6adb1;
+  --color-line-strong: rgb(150 158 162 / 0.28);
+  --color-switch-off: rgb(255 255 255 / 0.5);
+  --color-line: rgb(150 158 162 / 0.16);
+  --color-line-soft: rgb(150 158 162 / 0.12);
+  --color-track: rgb(146 152 214 / 0.14);
+  --color-chip: rgb(255 255 255 / 0.6);
+  --color-hint: rgb(255 255 255 / 0.5);
+  --color-hover: rgb(255 255 255 / 0.6);
+  --color-sunken: #f4fbfd;
+  --color-page: #f0f8fc;
+  --color-surface: #ffffff;
+  --color-backdrop: #e7f4fb;
+  --color-scrim: rgb(43 45 51 / 0.28);
+
+  /* the cyan family (the old blue family's names) */
+  --color-blue: #0e93b8;
+  --color-blue-50: #f1fcfe;
+  --color-blue-100: #e4f6fe;
+  --color-blue-200: #c3f2ff;
+  --color-blue-950: #0e5e75;
+  --color-on-blue: #1a1a1a;
+  --color-on-blue-2: #5f6467;
+  --color-on-blue-3: #8a9093;
+
+  /* the peach family (the old orange family's names) */
+  --color-orange: #fcb9a9;
+  --color-orange-50: #fff7f4;
+  --color-orange-100: #feede8;
+  --color-orange-line: rgb(252 185 169 / 0.85);
+  --color-orange-700: #b0603f;
+  --color-orange-800: #8e4a2f;
+  --color-orange-on-blue: #fcb9a9;
+
+  /* states */
+  --color-success: #2d9c7c;
+  --color-success-bg: rgb(181 239 223 / 0.45);
+  --color-success-accent: #37b893;
+  --color-win: #2d9c7c;
+  --color-win-bg: rgb(181 239 223 / 0.45);
+  --color-danger: #c1462c;
+  --color-danger-strong: #b0603f;
+  --color-danger-bg: #fff3ef;
+  --color-danger-line: rgb(252 185 169 / 0.85);
+  --color-destructive: #c1462c;
+  --color-live: #3de5ff;
+
+  /* the hall's surfaces (not drawn by this app; kept so the names resolve) */
+  --color-hall: #f0f8fc;
+  --color-hall-surround: #e7f4fb;
+  --color-hall-fg: #1a1a1a;
+  --color-hall-fg-2: #5f6467;
+  --color-hall-kicker: #0e93b8;
+  --color-hall-tile: rgb(255 255 255 / 0.6);
+  --color-hall-track: rgb(146 152 214 / 0.14);
+  --color-hall-empty: rgb(150 158 162 / 0.16);
+  --color-hall-chip: rgb(255 255 255 / 0.6);
+  --color-hall-accent: #75e2ff;
+  --color-hall-full: rgb(181 239 223 / 0.6);
+
+  /* roles */
+  --color-canvas: var(--color-page);
+  --color-panel: var(--color-surface);
+  --color-fg: var(--color-ink);
+  --color-fg-2: var(--color-text-2);
+  --color-fg-muted: var(--color-muted);
+  --color-edge: var(--color-line);
+  --color-primary: var(--color-cib-blue);
+  --color-on-primary: var(--color-ink);
+  --color-accent: var(--color-cib-orange);
+  --color-on-accent: var(--color-ink);
+
+  /* ─── type: Gilroy (app/fonts.ts) ─── */
+  --font-*: initial;
+  --font-sans: var(--font-gilroy), "Gilroy", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-ar: var(--font-gilroy), "Gilroy", ui-sans-serif, system-ui, Tahoma, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --font-weight-*: initial;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
+
+  --text-*: initial;
+  /* the control room: InCircle's sizes — eyebrows 900 and tracked, body 600, titles 800 */
+  --text-micro: 9.5px;   --text-micro--font-weight: 900;  --text-micro--letter-spacing: 0.16em;
+  --text-kicker: 10px;   --text-kicker--font-weight: 900; --text-kicker--letter-spacing: 0.16em;
+  --text-label: 10.5px;  --text-label--font-weight: 800;  --text-label--letter-spacing: 0.04em;
+  --text-meta: 12px;     --text-meta--line-height: 1.5;   --text-meta--font-weight: 600;
+  --text-hint: 12.5px;   --text-hint--line-height: 1.6;   --text-hint--font-weight: 600;
+  --text-desc: 13px;     --text-desc--line-height: 1.6;   --text-desc--font-weight: 600;
+  --text-row: 13.5px;    --text-row--font-weight: 700;
+  --text-body: 14px;     --text-body--line-height: 1.6;   --text-body--font-weight: 600;
+  --text-section: 15px;  --text-section--font-weight: 800; --text-section--letter-spacing: -0.015em;
+  --text-dialog: 20px;   --text-dialog--font-weight: 800; --text-dialog--letter-spacing: -0.025em;
+  --text-action: 18px;   --text-action--font-weight: 800;
+  --text-metric: 22px;   --text-metric--font-weight: 800; --text-metric--letter-spacing: -0.03em;
+  --text-title: 24px;    --text-title--font-weight: 800;  --text-title--letter-spacing: -0.025em;
+  --text-stat: 24px;     --text-stat--font-weight: 800;   --text-stat--letter-spacing: -0.03em;
+  --text-display: 32px;  --text-display--line-height: 1.08; --text-display--font-weight: 800; --text-display--letter-spacing: -0.03em;
+
+  /* ─── shape: InCircle is soft — pills, and cards at 24 ─── */
+  --radius-*: initial;
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-pill: 9999px;
+  --radius-phone: 46px;
+
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --blur-*: initial;
+  --shadow-hover: 0 8px 22px rgb(146 152 214 / 0.14);
+  --shadow-lift: 0 10px 26px rgb(146 152 214 / 0.16);
+  --shadow-raised: 0 2px 6px rgb(146 152 214 / 0.14);
+  --shadow-primary: 0 10px 26px rgb(117 226 255 / 0.3), 0 2px 6px rgb(146 152 214 / 0.12);
+  --shadow-cta: 0 10px 26px rgb(117 226 255 / 0.3), 0 2px 6px rgb(146 152 214 / 0.12);
+  --shadow-attention: 0 8px 22px rgb(252 185 169 / 0.24);
+  --shadow-overlay: 0 24px 64px rgb(43 45 51 / 0.12);
+  --shadow-focus: 0 0 0 4px rgb(117 226 255 / 0.18);
+  --shadow-selected: 0 0 0 2px rgb(117 226 255 / 0.4);
+
+  /* ─── motion ─── */
+  --ease-*: initial;
+  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-*: initial;
+  --animate-view-in: fd 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-pulse: pl 1.4s infinite;
+  --animate-flash: fl 1.5s ease;
+  @keyframes fd { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes pl { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+  @keyframes fl { 0%, 100% { box-shadow: none; } 18%, 62% { box-shadow: 0 0 0 3px rgb(117 226 255 / 0.6); } }
+
+  /* ─── layout ─── */
+  --breakpoint-shell: 73.75rem; /* 1180px: under it the rail is a drawer */
+}
+
+/* Plain custom properties: durations, spacing, the stage, and the mockup's own names */
+:root {
+  --dur-fast: 120ms;
+  --dur-base: 150ms;
+  --dur-view: 220ms;
+  --dur-toast: 240ms;
+  --dur-bar: 400ms;
+  --dur-pulse: 1.4s;
+  --dur-flash: 1.5s;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --z-savebar: 50;
+  --z-toast: 200;
+  --z-dialog: 300;
+
+  --stage-w: 1920px;
+  --stage-h: 1080px;
+  --stage-pad: 64px;
+  --stage-band: 128px;
+  --logo-min: 24px;
+  --touch-min: 44px;
+
+  /* The mockup's variable names (L7–12), plus the four it uses but never defines (L365–369) */
+  --blue: var(--color-cib-blue);
+  --orange: var(--color-cib-orange);
+  --ink: var(--color-ink);
+  --dgrey: var(--color-cib-grey-dark);
+  --lgrey: var(--color-cib-grey-light);
+  --page: var(--color-page);
+  --line: var(--color-line);
+  --muted: var(--color-muted);
+  --turq: var(--color-cib-turquoise);
+  --melon: var(--color-cib-melon);
+  --purple: var(--color-cib-purple);
+  --lime: var(--color-cib-lime);
+  --mustard: var(--color-cib-mustard);
+  --olive: var(--color-cib-olive);
+  --brown: var(--color-cib-brown);
+  --font: var(--font-sans);
+  --bad: var(--color-danger-strong);
+  --badbg: var(--color-danger-bg);
+  --warn: var(--color-orange-700);
+  --warnbg: var(--color-orange-100);
+}
+
+/* The dark-hall variant: the stage, and any blue block (.sband, .sc .tbnum, .sc .mine, the hand-off veil) */
+[data-surface="hall"],
+[data-surface="blue"] {
+  --color-canvas: var(--color-hall);
+  --color-panel: var(--color-hall-tile);
+  --color-fg: var(--color-hall-fg);
+  --color-fg-2: var(--color-hall-fg-2);
+  --color-fg-muted: var(--color-hall-kicker);
+  --color-edge: var(--color-hall-empty);
+  --color-track: var(--color-hall-track);
+  --color-primary: #ffffff;
+  --color-on-primary: var(--color-cib-blue);
+  --color-accent: var(--color-cib-orange);
+  --color-on-accent: var(--color-ink);
+  --muted: var(--color-hall-kicker);
+  --line: var(--color-hall-empty);
+  /* a blue avatar fallback would vanish on blue (lib/design/cib.ts pclFor) */
+  --face-blue: var(--color-cib-grey-dark);
+  color-scheme: dark;
+  background: var(--color-canvas);
+  color: var(--color-fg);
+}
+
+@layer base {
+  body {
+    background: var(--color-canvas);
+    color: var(--color-fg);
+    font: 600 14px/1.55 var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  :lang(ar) { font-family: var(--font-ar); }
+  /* Arabic is never letter-spaced or case-transformed (§3.6) */
+  :lang(ar) :is(.lb, .g, .mini, .now .k, .ros .rh b, .pv .k, th, .st span, .seqh b, .benefit b, .note b,
+                .sc .mk, .sc .cert .cn, .sc .tbnum span, .sc .mine span, .hall .hk, .hall .corner i) {
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  :lang(ar) .sc :is(.tx, .op, .field) { line-height: 1.65; }
+  ::selection { background: rgb(117 226 255 / 0.35); }
+  :focus-visible { outline: 2px solid rgb(61 229 255 / 0.9); outline-offset: 2px; }
+  [data-surface] :focus-visible { outline-color: #ffffff; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition-duration: 150ms !important; }
+  }
+
+  /*
+   * The rest of the mockup's reset (L15–17). L13 is Tailwind's preflight; L14
+   * is the `body` rule above. Buttons are left-aligned and borderless, the way
+   * every class in app/cib.css expects to find them.
+   */
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; font-size: inherit; text-align: left; }
+  button:disabled { cursor: default; }
+  input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgb(146 152 214 / 0.26); border-radius: 9px; border: 2px solid transparent; background-clip: content-box; }
+  ::placeholder { color: #a6adb1; }
+
+  a { color: inherit; text-decoration: none; }
+}
+
+/* ============================================================================
+   Kept from the engine (DESIGN.md §13 1.1 (c)). Behaviour, not look.
+   ============================================================================ */
+
+/* The phone never rubber-bands the whole page; each screen scrolls itself. */
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overscroll-behavior: none;
+}
+
+/*
+ * A touch device has no hover, so it LATCHES one: tap an element and the
+ * browser leaves :hover applied until you tap somewhere else. Every :hover in
+ * app/cib*.css therefore sits inside `@media (hover: hover)`, which matches a
+ * real pointer only. :active is deliberately NOT wrapped — it is the press
+ * feedback on a phone, and it clears when the finger lifts.
+ *
+ * And no UA tap overlay: without this, Android paints a dark rectangle and iOS
+ * a grey one over every tapped button for the length of the tap.
+ */
+button,
+a,
+[role="button"],
+input,
+label {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Scroll containers that hide their scrollbar (the dev strip, the recap pills). */
+[data-noscroll]::-webkit-scrollbar {
+  display: none;
+}
+[data-noscroll] {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* The control room's own scrollers: a thin bar in the mockup's grey. */
+[data-sc]::-webkit-scrollbar {
+  width: 6px;
+}
+[data-sc]::-webkit-scrollbar-thumb {
+  background: rgb(146 152 214 / 0.26);
+  border-radius: 10px;
+}
+
+/* Generic entrances, still named by the setup notice. */
+@keyframes riseIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* The confirm-code refusal: three short cycles, then still (ConfirmCode). */
+@keyframes shakeX {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(3px); }
+}
+
+/* ============================================================================
+   Real phones get the app, not a picture of a phone.
+
+   The frame in components/PhoneFrame.tsx is review chrome: a 430×860 device on
+   a grey field, so the screens can be judged on a desktop monitor. On an actual
+   handset that chrome is the thing making a "gap", so below the phone
+   breakpoint it is dropped and the app fills the viewport. The dev Pages strip
+   goes with it: it is scaffolding for whoever is building.
+
+   Every declaration is !important because the frame's chrome is set as INLINE
+   styles in PhoneFrame.tsx, and an inline style outranks any selector.
+   ============================================================================ */
+@media (max-width: 700px) {
+  #stage-pad {
+    padding: 0 !important;
+  }
+  #phone-view-container {
+    max-width: none !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  /* The drawn home indicator is a device mock; the OS draws the real one. */
+  #home-indicator {
+    display: none !important;
+  }
+  #dev-page-nav {
+    display: none !important;
+  }
+}
+
+/* ============================================================================
+   The dev Pages strip, at whatever width the window happens to be. Its pills'
+   padding and font are inline styles, hence !important.
+   ============================================================================ */
+@media (max-width: 1100px) {
+  .dev-page-pill {
+    padding: 6px 9px !important;
+    font-size: 10.5px !important;
+  }
+}
+
+@media (max-width: 860px) {
+  .dev-page-pill {
+    padding: 6px 8px !important;
+    font-size: 10px !important;
+  }
+  #dev-page-nav-label {
+    display: none !important;
+  }
+}

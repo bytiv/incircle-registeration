@@ -1,0 +1,679 @@
+/* ============================================================================
+   The mockup's stylesheet — `CIB AI Launchpad - Event System.html` L14–697 —
+   ported once, with its class names, per docs/DESIGN.md §5.0.
+
+   - Same selectors, same order, same values. Every colour literal is swapped
+     for the token that absorbs it (DESIGN.md §2); nothing here is a hex.
+   - Left out: the reset (L13–17, Tailwind's preflight plus app/globals.css
+     `@layer base`), the prototype chrome (L19–45) and the decision board
+     (L387–402).
+   - The phone (`.sc …`) and hall (`.hall …`) rules are drawn at preview size
+     in the mockup. They live at REAL size in app/cib-phone.css (§7.2) and
+     app/cib-hall.css (§8.2), and a control-room preview scales the real markup
+     down (components/ui/PhonePreview, HallPreview). So the preview-size copies
+     are not repeated here; the frames themselves (`.phone`, `.phonebig`,
+     `.prev`, `.pv`) are.
+   - The Port notes of §2.8 are applied in place and marked `Port note n`.
+   - Every :hover sits in `@media (hover: hover)`, in its original position, so
+     a touch never latches it and the cascade order stays the mockup's.
+   - What the app needs and the mockup never drew is at the end, under APP
+     ADDITIONS, each marked with where it comes from.
+
+   Class reference for builders: docs/UI_KIT.md.
+   ============================================================================ */
+
+@layer components {
+
+/* ══ SHELL ══ */
+.app{display:grid;grid-template-columns:214px 1fr;min-height:calc(100vh - 40px);background:var(--page)}
+.side{background:var(--color-surface);border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column}
+.br{display:flex;align-items:center;gap:10px;padding:0 8px 18px}
+/* .logo (L49–51) is the mockup's placeholder mark; the real artwork is <CibLogo> (DESIGN.md §10) */
+.br .nm b{font-size:13.5px;font-weight:700;display:block;line-height:1.15}
+.br .nm em{font-style:normal;font-size:7.5px;letter-spacing:2px;color:var(--muted);font-weight:700}
+/* Port note 3: the rail's group labels are muted, not #8A9096 */
+.g{font-size:9.5px;letter-spacing:1.6px;color:var(--color-muted);font-weight:700;padding:0 11px 7px;margin-top:20px}
+.nav{display:flex;width:100%;align-items:center;gap:9px;padding:8px 11px;border-radius:9px;font-size:13.5px;color:var(--color-text-2);transition:.14s;margin-bottom:2px}
+@media (hover:hover){.nav:hover{background:var(--color-hover);color:var(--ink)}}
+.nav.on{background:var(--blue);color:var(--color-on-blue);font-weight:600}
+.nav .c{margin-left:auto;font-size:10.5px;color:var(--color-faint)}
+.nav.on .c{color:var(--color-on-blue-3)}
+/* Run's word lit while the room is on: the pulsing dot (the mockup's .livebtn .d, L63) beside LIVE */
+.nav .c.live{display:inline-flex;align-items:center;gap:6px;font-weight:700;letter-spacing:.8px;color:var(--color-danger-strong)}
+.nav.on .c.live{color:var(--color-on-blue)}
+.nav .c.live i{width:7px;height:7px;border-radius:50%;background:var(--color-live);animation:pl 1.4s infinite;flex:none}
+.nav.create{background:var(--ink);color:var(--color-white);font-weight:600;justify-content:center;margin-bottom:4px}
+.foot{margin-top:auto;padding:14px 8px 0;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+.foot b{display:block;font-size:12.5px;color:var(--ink)}
+
+.view{display:none}.view.on{display:block;animation:fd .22s ease}
+.pad{padding:22px 26px 70px}
+.hd{display:flex;align-items:flex-start;gap:15px;margin-bottom:18px;flex-wrap:wrap}
+.hd h1{font-size:23px;font-weight:700;letter-spacing:-.6px}
+.hd p{font-size:13px;color:var(--muted);margin-top:2px;max-width:640px}
+.hd .r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn{background:var(--blue);color:var(--color-on-blue);font-size:12.5px;font-weight:600;padding:9px 16px;border-radius:9px;white-space:nowrap;transition:.14s;text-align:center;display:inline-block}
+@media (hover:hover){.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-primary)}}
+.btn.g{background:var(--color-surface);color:var(--ink);border:1px solid var(--color-line-strong)}
+/* Port note 1: text on an orange fill is ink */
+.btn.o{background:var(--orange);color:var(--color-on-accent)}
+.card{background:var(--color-surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:12px}
+.lb{font-size:9.5px;letter-spacing:1.4px;color:var(--muted);font-weight:700;margin-bottom:12px}
+.fld{border:1px solid var(--line);border-radius:9px;padding:10px 13px;font-size:13px;background:var(--color-surface);width:100%;outline:none}
+.fld:focus{border-color:var(--blue);box-shadow:var(--shadow-focus)}
+textarea.fld{min-height:64px;resize:vertical}
+.mini{font-size:10.5px;color:var(--muted);margin-bottom:6px;display:block;font-weight:700;letter-spacing:.3px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.seg{display:flex;gap:5px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line);background:var(--color-surface);border-radius:9px;padding:8px 13px;font-size:12.5px;color:var(--color-text-2);transition:.13s;text-align:center}
+@media (hover:hover){.seg button:hover{border-color:var(--color-faint)}}
+.seg button.on{background:var(--blue);color:var(--color-on-blue);border-color:var(--blue);font-weight:600}
+.sw{width:42px;height:24px;border-radius:13px;background:var(--blue);position:relative;cursor:pointer;transition:.15s;flex:none}
+/* logical: the knob travels the other way in Arabic (DESIGN.md §5.6) */
+.sw u{position:absolute;top:3px;inset-inline-end:3px;width:18px;height:18px;border-radius:50%;background:var(--color-surface);display:block;transition:.15s}
+.sw.off{background:var(--color-switch-off)}.sw.off u{inset-inline-end:21px}
+.swrow{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--color-line-soft)}
+.swrow:last-child{border:none}
+.swrow b{font-size:13.5px;display:block}.swrow span{font-size:11.5px;color:var(--muted);display:block}
+.note{background:var(--color-orange-50);border:1px solid var(--color-orange-line);border-radius:12px;padding:13px 15px;font-size:12.5px;color:var(--color-orange-800);line-height:1.6;margin-bottom:14px}
+.note b{display:block;font-size:10px;letter-spacing:1.3px;margin-bottom:4px}
+.hintbox{background:var(--color-hint);border-radius:10px;padding:11px 13px;font-size:12.5px;color:var(--muted);line-height:1.6;margin-top:11px}
+.hintbox b{color:var(--ink)}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.st{background:var(--color-surface);border:1px solid var(--line);border-radius:12px;padding:13px 18px;min-width:130px}
+.st span{display:block;font-size:9.5px;letter-spacing:1.4px;color:var(--muted);font-weight:700}
+.st b{font-size:24px;font-weight:700;display:block;margin-top:2px;letter-spacing:-.8px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:9.5px;letter-spacing:1.3px;color:var(--muted);font-weight:700;padding:9px 12px;border-bottom:1px solid var(--line)}
+td{padding:11px 12px;border-bottom:1px solid var(--color-line-soft)}
+tr:last-child td{border:none}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap}
+
+/* ══ RUN ══ */
+.rtop{background:var(--color-surface);border-bottom:1px solid var(--line);padding:12px 26px;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+/* Port note 3: the word LIVE is danger-strong; the dot stays --color-live */
+.live{display:flex;align-items:center;gap:7px;font-size:10.5px;letter-spacing:1.6px;font-weight:700;color:var(--color-danger-strong)}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--color-live);animation:pl 1.4s infinite}
+.rpill{background:var(--color-chip);border-radius:20px;padding:6px 13px;font-size:12.5px;color:var(--color-text-2)}
+.rpill b{color:var(--ink)}
+.rgrid{display:grid;grid-template-columns:1fr 330px;gap:18px;padding:20px 26px 50px;align-items:start}
+.rgrid.mod3{grid-template-columns:1fr 300px 300px}
+.rgrid #modCol:empty{display:none}
+.modcard{background:var(--color-surface);border:1px solid var(--orange);border-radius:16px;overflow:hidden;position:sticky;top:58px}
+.modcard .mh{padding:13px 16px;background:var(--color-orange-50);border-bottom:1px solid var(--color-orange-line);display:flex;align-items:center;gap:8px}
+.modcard .mh b{font-size:10px;letter-spacing:1.6px;color:var(--color-orange-700);font-weight:700}
+/* Port note 1 */
+.modcard .mh .cnt{margin-left:auto;background:var(--orange);color:var(--color-on-accent);font-size:11px;font-weight:700;border-radius:20px;padding:2px 9px}
+.modcard .mb{padding:10px;max-height:calc(100vh - 230px);overflow-y:auto}
+.modcard .why{font-size:11px;color:var(--muted);line-height:1.5;padding:10px 14px;border-top:1px solid var(--line);background:var(--color-sunken)}
+.modq{border:1px solid var(--line);border-radius:11px;padding:11px 12px;margin-bottom:8px;transition:.2s}
+.modq p{font-size:12.5px;line-height:1.5}
+.modq .mt{font-size:10.5px;color:var(--muted);margin-top:4px}
+.modq .ma{display:flex;gap:6px;margin-top:9px}
+.modq .ok{flex:1;background:var(--blue);color:var(--color-on-blue);border-radius:8px;padding:7px;font-size:11.5px;font-weight:700;text-align:center}
+.modq .no{border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:11.5px;color:var(--color-muted);text-align:center}
+@media (hover:hover){.modq .no:hover{border-color:var(--color-destructive);color:var(--color-destructive)}}
+.modlive{padding:10px 14px;border-top:1px solid var(--line)}
+.modlive b{font-size:9.5px;letter-spacing:1.4px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px}
+.modlive div{font-size:11.5px;color:var(--color-text-2);padding:4px 0;border-bottom:1px solid var(--color-line-soft)}
+.modempty{text-align:center;padding:26px 14px;font-size:12.5px;color:var(--muted);line-height:1.6}
+.now{background:var(--color-surface);border:1px solid var(--line);border-radius:16px;padding:22px}
+.now .k{font-size:10px;letter-spacing:2px;color:var(--blue);font-weight:700}
+.now h2{font-size:32px;font-weight:700;letter-spacing:-1.2px;margin:7px 0 4px;line-height:1.08}
+.now .s{font-size:13.5px;color:var(--muted)}
+/* logical: the accent rule sits on the inline-start edge (DESIGN.md §3.7) */
+.benefit{background:var(--color-hint);border-inline-start:3px solid var(--orange);border-radius:0 9px 9px 0;padding:10px 14px;font-size:12.5px;color:var(--color-text-2);margin-top:14px;line-height:1.55}
+/* Port note 2: small orange text is orange-700 */
+.benefit b{color:var(--ink);display:block;font-size:9.5px;letter-spacing:1.4px;margin-bottom:3px;color:var(--color-orange-700)}
+.mrow{display:flex;gap:26px;margin-top:16px;flex-wrap:wrap}
+.m span{display:block;font-size:9.5px;letter-spacing:1.5px;color:var(--muted);font-weight:700}
+.m b{font-size:22px;font-weight:700;display:block;margin-top:1px;letter-spacing:-.6px}
+.pbarw{height:7px;border-radius:4px;background:var(--color-track);overflow:hidden;margin-top:15px}
+/* one of the mockup's three gradients (DESIGN.md §2.9) */
+.pbarw u{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--orange));transition:width .4s}
+.pnote{font-size:12.5px;color:var(--muted);margin-top:8px}
+.bignext{margin-top:16px;background:var(--blue);color:var(--color-on-blue);border-radius:13px;padding:18px;text-align:center;font-size:18px;font-weight:700;transition:.15s;width:100%}
+@media (hover:hover){.bignext:hover{transform:translateY(-2px);box-shadow:var(--shadow-cta)}}
+.bignext small{display:block;font-size:11px;font-weight:600;opacity:.65;letter-spacing:1.3px;margin-top:5px}
+.sec2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.act{background:var(--color-surface);border:1px solid var(--line);border-radius:12px;padding:13px 15px;transition:.14s;width:100%}
+@media (hover:hover){.act:hover{border-color:var(--color-faint);box-shadow:var(--shadow-hover)}}
+.act b{display:block;font-size:13.5px;font-weight:600}
+.act span{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.45}
+.ros{background:var(--color-surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;position:sticky;top:58px}
+.ros .rh{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center}
+.ros .rh b{font-size:10px;letter-spacing:1.6px;color:var(--muted);font-weight:700}
+.ros .rh span{margin-left:auto;font-size:11px;color:var(--color-faint)}
+.ros .list{max-height:calc(100vh - 200px);overflow-y:auto;padding:7px}
+.rrow{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:10px;border:1px solid transparent;transition:.12s;cursor:pointer;width:100%}
+@media (hover:hover){.rrow:hover{background:var(--color-hover);border-color:var(--line)}}
+.rrow.now{background:var(--color-blue-100);border-color:var(--blue)}
+.rrow .nn{width:22px;font-size:10.5px;color:var(--color-faint);font-weight:700;flex:none}
+.rrow .ty{width:9px;height:9px;border-radius:50%;flex:none}
+.rrow .tt{flex:1;min-width:0}
+.rrow .tt b{display:block;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rrow .tt span{font-size:10.5px;color:var(--muted)}
+.rrow.done .tt b{color:var(--color-faint)}
+.rrow .mn{font-size:10.5px;color:var(--color-faint);flex:none}
+
+/* ══ PREVIEWS ══ (the frames; their content is the real-size .sc / .hall) */
+.prev{display:grid;grid-template-columns:236px 1fr;gap:12px;margin-top:12px}
+.pv{background:var(--color-surface);border:1px solid var(--line);border-radius:14px;padding:15px}
+.pv .k{font-size:9.5px;letter-spacing:1.5px;color:var(--muted);font-weight:700;margin-bottom:11px;display:flex;align-items:center;gap:6px}
+/* Port note 2: small orange text is orange-700 */
+.pv .k em{font-style:normal;margin-left:auto;font-size:9.5px;color:var(--color-orange-700)}
+.phone{width:196px;border:8px solid var(--ink);border-radius:26px;background:var(--color-surface);padding:14px 12px;min-height:338px;margin:0 auto;overflow:hidden}
+.phonebig{width:290px;border:10px solid var(--ink);border-radius:34px;background:var(--color-surface);padding:20px 16px;min-height:520px;margin:0 auto}
+
+/* ══ MOMENTS BUILDER ══ */
+.bgrid{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+.seqh{display:flex;align-items:center;padding:0 2px 10px}
+.seqh b{font-size:10px;letter-spacing:1.6px;color:var(--muted);font-weight:700}
+.seqh span{margin-left:auto;font-size:11.5px;color:var(--color-faint)}
+.srow{display:flex;align-items:center;gap:11px;background:var(--color-surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:7px;transition:.13s;width:100%}
+@media (hover:hover){.srow:hover{border-color:var(--color-faint);box-shadow:var(--shadow-hover)}}
+.srow .nn{width:20px;font-size:11px;color:var(--color-faint);font-weight:700;flex:none}
+.srow .bdg{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--color-white);font-size:14px;font-weight:700;flex:none}
+.srow .tt{flex:1;min-width:0}
+.srow .tt b{display:block;font-size:14px;font-weight:600}
+.srow .tt span{font-size:11.5px;color:var(--muted);display:block}
+/* Port note 2 */
+.srow .tt .ben{font-size:11px;color:var(--color-orange-700);font-weight:600;display:block;margin-top:3px;line-height:1.45}
+.srow .mn{font-size:11px;color:var(--color-faint);flex:none}
+.sband{display:flex;align-items:center;gap:11px;background:var(--blue);color:var(--color-on-blue);border-radius:12px;padding:11px 14px;margin:16px 0 7px;width:100%;text-align:left}
+.sband:first-child{margin-top:0}
+.sband .nn{width:44px;font-size:11px;font-weight:700;color:var(--color-on-blue-3);flex:none}
+.sband .bdg{width:26px;height:26px;border-radius:8px;background:var(--color-hall-track);display:flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+.sband .tt{flex:1;min-width:0}
+.sband .tt b{display:block;font-size:14px;font-weight:700;letter-spacing:-.2px}
+.sband .tt span{font-size:11px;color:var(--color-on-blue-2)}
+.sband .mn{font-size:11px;color:var(--color-on-blue-3);flex:none}
+.srow.child,.dend.child{margin-left:20px;border-left:3px solid var(--lgrey)}
+@media (hover:hover){.srow.child:hover{border-left-color:var(--blue)}}
+.grip{width:22px;flex:none;color:var(--color-line-strong);font-size:15px;line-height:1;cursor:grab;text-align:center;letter-spacing:-2px;user-select:none}
+.grip:active{cursor:grabbing}
+@media (hover:hover){.srow:hover .grip{color:var(--blue)}}
+.sband .grip{color:var(--color-on-blue-3)}
+@media (hover:hover){.sband:hover .grip{color:var(--color-white)}}
+.srow.dragging,.sband.dragging{opacity:.32}
+.srow.ghost,.sband.ghost{opacity:.32}
+.dend{border:2px dashed var(--line);border-radius:12px;padding:14px;text-align:center;font-size:12px;color:var(--color-faint);margin-top:6px}
+#seqList{position:relative}
+.dropline{position:absolute;height:0;border-top:2px solid var(--orange);pointer-events:none;z-index:6;display:none;
+transition:top .07s linear,left .07s linear,width .07s linear}
+.dropline.on{display:block}
+.dropline i{position:absolute;left:-4px;top:-4px;width:7px;height:7px;border-radius:50%;background:var(--orange);display:block}
+.dropline u{position:absolute;right:-4px;top:-4px;width:7px;height:7px;border-radius:50%;background:var(--orange);display:block}
+.dragtip{font-size:11.5px;color:var(--muted);padding:0 2px 10px}
+.ctrl{display:flex;gap:3px;flex:none;margin-left:8px}
+.ctrl i{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+font-style:normal;font-size:12px;color:var(--color-muted);background:var(--color-surface);transition:.12s;cursor:pointer}
+@media (hover:hover){.ctrl i:hover{border-color:var(--blue);color:var(--blue)}}
+@media (hover:hover){.ctrl i.x:hover{border-color:var(--color-destructive);color:var(--color-destructive)}}
+.ctrl i.off{opacity:.25;pointer-events:none}
+.sband .ctrl i{background:color-mix(in srgb,var(--color-white) 14%,transparent);border-color:color-mix(in srgb,var(--color-white) 30%,transparent);color:var(--color-white)}
+@media (hover:hover){.sband .ctrl i:hover{background:var(--color-white);color:var(--blue);border-color:var(--color-white)}}
+.ros .sbar{display:flex;align-items:center;gap:7px;background:var(--color-blue-100);border-radius:8px;padding:7px 10px;margin:8px 4px 4px;font-size:10px;
+letter-spacing:1.2px;font-weight:700;color:var(--blue)}
+/* Port note 5: #7E96C6 on #EDF2FC fails; blue */
+.ros .sbar span{margin-left:auto;font-weight:600;letter-spacing:0;font-size:10.5px;color:var(--blue)}
+
+.lib{position:sticky;top:52px;max-height:calc(100vh - 70px);overflow-y:auto;padding-right:2px}
+.lib .libh{font-size:10px;letter-spacing:1.6px;color:var(--muted);font-weight:700;padding:0 2px 10px}
+.libc{background:var(--color-surface);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:7px;display:flex;gap:11px;align-items:flex-start;transition:.13s;width:100%}
+@media (hover:hover){.libc:hover{border-color:var(--color-faint);transform:translateY(-1px);box-shadow:var(--shadow-lift)}}
+.libc .bdg{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--color-white);font-size:15px;font-weight:700;flex:none}
+.libc b{display:block;font-size:13.5px;font-weight:700}
+.libc span{display:block;font-size:11px;color:var(--muted);line-height:1.45;margin-top:2px}
+
+.libc{cursor:grab}.libc:active{cursor:grabbing}
+.libhd{display:flex;align-items:center;gap:10px;width:100%;background:var(--color-surface);border:1px solid var(--line);border-radius:12px;
+padding:11px 12px;margin-bottom:7px;transition:.12s}
+@media (hover:hover){.libhd:hover{border-color:var(--color-faint)}}
+.libhd.open{border-color:var(--blue);background:var(--color-blue-50);margin-bottom:0;border-bottom-left-radius:0;border-bottom-right-radius:0}
+.libhd .bdg{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--color-white);font-size:13px;font-weight:700;flex:none}
+.libhd .tt{flex:1;min-width:0}
+.libhd .tt b{display:block;font-size:13.5px;font-weight:700}
+.libhd .tt span{display:block;font-size:10.5px;color:var(--muted)}
+.libhd .cv{font-size:14px;color:var(--color-faint);transition:.15s;flex:none}
+.libhd.open .cv{transform:rotate(180deg);color:var(--blue)}
+.mombox{border:1px solid var(--blue);border-top:none;border-radius:0 0 12px 12px;background:var(--color-blue-50);padding:7px;margin-bottom:8px}
+
+.srow .tt .momtag,.rrow .tt .momtag{display:inline-flex;white-space:nowrap;vertical-align:middle}
+.momtag.hd{font-size:11px;padding:4px 11px;vertical-align:middle;margin-right:4px}
+.momtag.cust{background:var(--color-danger-bg);color:var(--color-danger-strong)}
+.momr{display:flex;align-items:center;gap:10px;width:100%;background:var(--color-surface);border:1px solid var(--line);border-radius:10px;
+padding:7px 8px;margin-bottom:5px;cursor:grab;transition:.12s}
+@media (hover:hover){.momr:hover{border-color:var(--blue);box-shadow:var(--shadow-lift)}}
+.momr:active{cursor:grabbing}
+.momr.m{background:color-mix(in srgb,var(--melon) 3%,var(--color-surface));border-color:var(--color-danger-line)}
+.momr .th{width:46px;height:62px;border-radius:6px;border:2px solid var(--ink);background:var(--color-surface);flex:none;overflow:hidden;position:relative}
+.momr.m .th{border-color:var(--melon);border-style:dashed}
+.momr .th .sk{transform:scale(.235);transform-origin:top left;position:absolute;top:3px;left:3px;width:186px}
+.momr .tt{flex:1;min-width:0}
+.momr .tt b{display:block;font-size:11.5px;font-weight:700;line-height:1.3}
+.momr .tt span{display:block;font-size:9.5px;color:var(--muted);line-height:1.35}
+.momr .fl{font-size:8px;letter-spacing:.8px;font-weight:700;padding:2px 6px;border-radius:20px;flex:none}
+.momr .fl.m{background:var(--color-danger-bg);color:var(--color-danger-strong)}
+.momr .fl.n{background:var(--color-orange-100);color:var(--color-orange-700)}
+.momtag{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.3px;
+background:var(--color-chip);color:var(--color-text-2);border-radius:20px;padding:3px 9px;margin-left:8px}
+.momtag i{width:7px;height:7px;border-radius:50%;font-style:normal;flex:none}
+.allset{background:var(--color-surface);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.allset .ah{display:flex;align-items:center;gap:11px;width:100%;padding:14px 18px}
+@media (hover:hover){.allset .ah:hover{background:var(--color-sunken)}}
+.allset .ah b{font-size:13.5px;font-weight:700;display:block}
+.allset .ah span{font-size:11.5px;color:var(--muted);display:block}
+.allset .ah .cv{margin-left:auto;font-size:14px;color:var(--color-faint)}
+.allset.open .ah .cv{transform:rotate(180deg)}
+.crumb{display:flex;align-items:center;gap:9px;background:var(--color-surface);border:1px solid var(--line);border-radius:12px;
+padding:10px 14px;margin-bottom:11px;flex-wrap:wrap}
+.crumb .bdg{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--color-white);font-size:12px;font-weight:700;flex:none}
+.crumb .lib{font-size:13.5px;font-weight:700}
+.crumb .sep{color:var(--color-line-strong);font-size:13px}
+.crumb .mom{font-size:13.5px;font-weight:700;color:var(--blue)}
+.crumb .mom.cust{color:var(--melon)}
+.crumb .lbl{font-size:9.5px;letter-spacing:1.3px;color:var(--muted);font-weight:700;margin-right:2px}
+.crumb .swap{margin-left:auto;border:1px solid var(--color-line-strong);border-radius:9px;padding:7px 13px;font-size:12px;font-weight:600;background:var(--color-surface);text-align:center}
+@media (hover:hover){.crumb .swap:hover{border-color:var(--blue);color:var(--blue)}}
+.lockcard{background:var(--color-sunken);border:1px solid var(--line);border-radius:14px;padding:15px 17px;margin-bottom:11px}
+.lockcard .lb{color:var(--muted)}
+.lrowk{display:flex;align-items:flex-start;gap:11px;padding:9px 0;border-bottom:1px solid var(--color-line-soft)}
+.lrowk:last-child{border-bottom:none}
+.lrowk .ic{width:20px;height:20px;border-radius:6px;background:var(--line);color:var(--color-muted);font-size:10px;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
+.lrowk.m .ic{background:var(--color-danger-bg);color:var(--color-danger-strong)}
+.lrowk.n .ic{background:var(--color-orange-100);color:var(--color-orange-700)}
+.lrowk .kk{font-size:11.5px;color:var(--muted);width:150px;flex:none;line-height:1.45}
+.lrowk .vv{font-size:12.5px;font-weight:600;flex:1;line-height:1.45}
+.lrowk.m .vv{color:var(--bad)}
+.lrowk.n .vv{color:var(--warn)}
+.lrowk .fg{font-size:8.5px;letter-spacing:.9px;font-weight:700;border-radius:20px;padding:3px 8px;flex:none}
+.lrowk .fg.m{background:var(--badbg);color:var(--bad)}
+.lrowk .fg.n{background:var(--warnbg);color:var(--warn)}
+.momhead{display:flex;align-items:center;gap:12px;background:var(--color-surface);border:1px solid var(--line);border-inline-start:4px solid var(--blue);
+border-radius:13px;padding:13px 16px;margin-bottom:11px}
+.momhead.m{border-inline-start-color:var(--melon);background:color-mix(in srgb,var(--melon) 3%,var(--color-surface))}
+.momhead .bdg{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--color-white);font-size:13px;font-weight:700;flex:none}
+.momhead b{font-size:14.5px;font-weight:700;display:block}
+.momhead span{font-size:12px;color:var(--muted);display:block;line-height:1.5}
+/* Port note 1 */
+.libc .new{display:inline-block;font-size:8.5px;letter-spacing:1.2px;background:var(--orange);color:var(--color-on-accent);padding:2px 7px;border-radius:10px;font-weight:700;margin-left:6px;vertical-align:middle}
+.tabs{display:flex;gap:3px;background:var(--color-track);border-radius:10px;padding:3px;width:fit-content;margin-bottom:18px;flex-wrap:wrap}
+/* Port note (§5.7): muted on the track is 4.3:1, so inactive tabs are text-2 */
+.tabs button{font-size:12.5px;padding:8px 16px;border-radius:8px;color:var(--color-text-2);font-weight:500;text-align:center}
+.tabs button.on{background:var(--color-surface);color:var(--ink);font-weight:600;box-shadow:var(--shadow-raised)}
+.back{font-size:12.5px;color:var(--muted);font-weight:500;display:inline-flex;gap:6px;align-items:center;margin-bottom:12px}
+@media (hover:hover){.back:hover{color:var(--ink)}}
+.optline{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.optline input{flex:1}
+.optline button{border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:11.5px;color:var(--color-muted)}
+@media (hover:hover){.optline button:hover{border-color:var(--color-live);color:var(--color-live)}}
+
+/* ══ MODERATION ══ */
+.modrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;background:var(--color-surface)}
+.modrow .tx{flex:1;font-size:12.5px}
+.modrow .tx span{display:block;font-size:10.5px;color:var(--muted)}
+.modrow .ok{background:var(--blue);color:var(--color-on-blue);border-radius:8px;padding:6px 12px;font-size:11.5px;font-weight:700}
+.modrow .no{border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:11.5px;color:var(--color-muted)}
+@media (hover:hover){.modrow .no:hover{border-color:var(--color-destructive);color:var(--color-destructive)}}
+
+.savebar{position:sticky;top:40px;z-index:50;display:flex;align-items:center;gap:12px;background:var(--color-surface);border:1px solid var(--line);
+border-radius:13px;padding:11px 15px;margin-bottom:14px;transition:.18s}
+.savebar.on{border-color:var(--orange);background:var(--color-orange-50);box-shadow:var(--shadow-attention)}
+.savebar .ss{font-size:12.5px;color:var(--muted);font-weight:600}
+.savebar.on .ss{color:var(--color-orange-700)}
+.savebar .r{margin-left:auto;display:flex;gap:8px}
+.savebar .dis{border:1px solid var(--color-line-strong);border-radius:9px;padding:9px 15px;font-size:12.5px;font-weight:600;background:var(--color-surface);text-align:center}
+@media (hover:hover){.savebar .dis:hover{border-color:var(--color-destructive);color:var(--color-destructive)}}
+.savebar .sv{background:var(--blue);color:var(--color-on-blue);border-radius:9px;padding:9px 20px;font-size:12.5px;font-weight:700;text-align:center;opacity:.45;pointer-events:none}
+/* Port note 1: the pending commit is orange with ink text */
+.savebar.on .sv{opacity:1;pointer-events:auto;background:var(--orange);color:var(--color-on-accent)}
+.qrow{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--color-line-soft)}
+.qrow:last-of-type{border-bottom:none}
+.qrow .qn{width:26px;height:26px;border-radius:8px;background:var(--turq);color:var(--color-white);font-size:12px;font-weight:700;
+display:flex;align-items:center;justify-content:center;flex:none;margin-top:8px}
+.anhead{display:flex;align-items:center;gap:12px;margin:14px 0 8px;flex-wrap:wrap}
+.anhead b{font-size:15px;font-weight:700;display:block}
+.anhead span{font-size:11.5px;color:var(--muted);display:block}
+.anhead .anbtns{margin-left:auto;display:flex;gap:7px}
+.anbar{height:7px;border-radius:4px;background:var(--color-track);overflow:hidden}
+.anbar u{display:block;height:100%;background:var(--melon);transition:width .25s}
+.anchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.anchip{display:inline-flex;align-items:center;gap:6px;background:var(--color-danger-bg);border:1px solid var(--color-danger-line);color:var(--color-danger-strong);
+font-size:11.5px;font-weight:600;border-radius:20px;padding:4px 6px 4px 11px}
+.anchip i{font-style:normal;cursor:pointer;width:15px;height:15px;border-radius:50%;background:var(--color-destructive);color:var(--color-white);
+font-size:9px;display:flex;align-items:center;justify-content:center}
+.anlist{max-height:280px;overflow-y:auto;border:1px solid var(--line);border-radius:11px;margin-top:9px;padding:5px}
+.anrow{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:9px;transition:.11s}
+@media (hover:hover){.anrow:hover{background:var(--color-hover)}}
+.anrow.on{background:var(--color-danger-bg)}
+.anrow .tick{width:19px;height:19px;border-radius:6px;border:1.5px solid var(--color-line-strong);flex:none;font-size:11px;color:var(--color-white);
+display:flex;align-items:center;justify-content:center}
+.anrow.on .tick{background:var(--melon);border-color:var(--melon)}
+.anrow .an b{font-size:12.5px;font-weight:600;display:block}
+.anrow .an span{font-size:10.5px;color:var(--muted);display:block}
+.bigname{font-size:23px;font-weight:700;letter-spacing:-.6px;color:var(--olive);padding:4px 0}
+.cmp{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cmp div{background:var(--color-sunken);border-radius:11px;padding:13px 14px}
+.cmp b{font-size:13.5px;font-weight:700;display:block;margin-bottom:4px}
+.cmp p{font-size:11.5px;color:var(--muted);line-height:1.55}
+.flash{animation:fl 1.5s ease}
+#ask .box .aa .mid{border:1px solid var(--color-line-strong);color:var(--ink);background:var(--color-surface)}
+#ask{position:fixed;inset:0;background:var(--color-scrim);z-index:300;display:none;align-items:center;justify-content:center;padding:22px}
+#ask.on{display:flex;animation:fd .15s ease}
+#ask .box{background:var(--color-surface);border-radius:16px;padding:22px;max-width:420px;width:100%;box-shadow:var(--shadow-overlay)}
+#ask .box b{font-size:17px;font-weight:700;letter-spacing:-.3px;display:block}
+#ask .box p{font-size:13px;color:var(--muted);line-height:1.6;margin-top:8px}
+#ask .box .aa{display:flex;gap:8px;margin-top:18px}
+#ask .box .aa button{flex:1;padding:11px;border-radius:10px;font-size:13px;font-weight:700;text-align:center}
+#ask .box .aa .no{border:1px solid var(--color-line-strong);color:var(--ink);background:var(--color-surface)}
+/* Port note 4: the confirm-delete fill is danger (4.9:1 with white) */
+#ask .box .aa .yes{background:var(--color-danger);color:var(--color-white)}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--color-white);
+padding:11px 20px;border-radius:11px;font-size:13px;opacity:0;transition:.24s;z-index:200;pointer-events:none;max-width:82vw}
+#toast.show{opacity:1;transform:translateX(-50%)}
+/* .ar (L468) is replaced by the dir attribute (DESIGN.md §3.7) */
+@media(max-width:1180px){.rgrid,.bgrid{grid-template-columns:1fr}.prev{grid-template-columns:1fr}.app{grid-template-columns:1fr}.side{display:none}}
+
+.prop{display:flex;align-items:center;gap:10px;width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--color-surface);margin-bottom:6px;text-align:left}
+.prop.on{border-color:var(--blue);background:var(--color-blue-50)}
+.prop .tk{width:16px;height:16px;border-radius:50%;border:2px solid var(--color-faint);flex:none}
+.prop.on .tk{border-color:var(--blue);background:var(--blue);box-shadow:inset 0 0 0 3px var(--color-surface)}
+.prop .tt{flex:1;min-width:0}.prop .tt b{display:block;font-size:13px;font-weight:700}
+.prop .tt span{display:block;font-size:10.5px;color:var(--muted)}
+.prop .src{font-size:9px;letter-spacing:.7px;font-weight:700;border-radius:5px;padding:3px 7px;flex:none}
+.prop .src.ok{background:var(--color-success-bg);color:var(--color-success)}
+.prop .src.late{background:var(--color-danger-bg);color:var(--color-danger)}
+.wrn{background:var(--color-danger-bg);border:1px solid var(--color-danger-line);border-radius:10px;padding:11px 13px;font-size:12.5px;color:var(--color-danger-strong);line-height:1.55;margin-top:11px}
+.wrn b{display:block;font-size:9.5px;letter-spacing:1.2px;margin-bottom:4px;color:var(--color-danger-strong)}
+.calc{display:flex;gap:16px;background:var(--color-sunken);border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-top:10px}
+.calc div{flex:1}.calc b{display:block;font-size:20px;font-weight:700;line-height:1.1}
+/* Port note 6: a label a person must read is muted, not faint */
+.calc span{display:block;font-size:9.5px;letter-spacing:1.1px;color:var(--color-muted);font-weight:700}
+.anch{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.anch span{background:var(--color-blue-100);border:1px solid var(--color-blue-200);color:var(--blue);border-radius:16px;padding:4px 10px;font-size:11px;font-weight:600}
+.qcard{border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:8px;background:var(--color-sunken)}
+.qcard .qh{display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap}
+.qcard .qh .n{width:20px;height:20px;border-radius:6px;background:var(--blue);color:var(--color-on-blue);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.qcard .qh .ty{margin-left:auto;display:flex;gap:3px;flex-wrap:wrap}
+.qcard .qh .ty button{font-size:10px;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:var(--color-surface);font-weight:600;color:var(--muted);text-align:center}
+.qcard .qh .ty button.on{background:var(--blue);color:var(--color-on-blue);border-color:var(--blue)}
+.qcard .qh .mv{font-size:12px;color:var(--color-faint);padding:2px 4px;text-align:center}
+.frow{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px;background:var(--color-surface)}
+.frow .n{width:20px;height:20px;border-radius:6px;background:var(--mustard);color:var(--ink);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.frow .nm{flex:1;min-width:0;font-size:12.5px;font-weight:600}
+.frow .src{font-size:8.5px;letter-spacing:.6px;font-weight:700;border-radius:5px;padding:3px 6px;flex:none}
+.frow .src.ok{background:var(--color-success-bg);color:var(--color-success)}
+.frow .src.late{background:var(--color-danger-bg);color:var(--color-danger)}
+.frow .x{border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:10.5px;color:var(--muted);flex:none;text-align:center}
+.pickrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pickrow button{border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:11px;background:var(--color-surface);font-weight:600;text-align:center}
+.tmp{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.tmp button{border:1px solid var(--line);border-radius:10px;padding:8px 6px;background:var(--color-surface);text-align:center}
+.tmp button.on{border-color:var(--blue);box-shadow:var(--shadow-selected)}
+.tmp button .mm{height:34px;border-radius:5px;margin-bottom:5px;display:block}
+.tmp button span{font-size:10px;font-weight:700;display:block}
+.upl{border:1px dashed var(--color-line-strong);border-radius:10px;padding:15px;text-align:center;font-size:11.5px;color:var(--color-muted);background:var(--color-sunken);margin-top:8px}
+.ordl{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:8px}
+.ordl .r{display:flex;align-items:center;gap:9px;padding:8px 11px;border-top:1px solid var(--color-line-soft);font-size:12.5px}
+.ordl .r:first-child{border-top:none}
+.ordl .r.on{background:var(--color-win-bg)}
+.ordl .r .n{width:20px;height:20px;border-radius:6px;background:var(--color-track);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.ordl .r.on .n{background:var(--lime);color:var(--color-white)}
+.ordl .r .nn{flex:1;min-width:0}
+.ordl .r .mv{font-size:11px;color:var(--color-faint);padding:2px 4px;margin-left:auto;text-align:center}
+.seg button.dis{opacity:.34;cursor:not-allowed}
+.qn{background:var(--color-surface);border:1px solid var(--line);border-inline-start:3px solid var(--orange);border-radius:12px;padding:15px 17px;margin-bottom:12px}
+/* Port note 2 */
+.qn .lb{color:var(--color-orange-700);margin-bottom:10px}
+.qrow{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--color-line-soft)}
+.qrow:first-of-type{border-top:none;padding-top:0}
+.qrow .n{width:20px;height:20px;border-radius:6px;background:var(--color-orange-100);color:var(--color-orange-700);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.qrow p{font-size:13px;color:var(--color-text-2);line-height:1.55;flex:1}
+
+.orow{display:flex;gap:8px;align-items:center;margin-bottom:7px}
+.orow .n{width:22px;height:22px;border-radius:6px;background:var(--turq);color:var(--color-white);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.orow .fld{flex:1;min-width:0}
+.orow .x{border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-size:11.5px;color:var(--muted);flex:none;text-align:center;background:var(--color-surface)}
+@media (hover:hover){.orow .x:hover{border-color:var(--color-destructive);color:var(--color-danger)}}
+.addb{border:1px dashed var(--line);border-radius:9px;padding:9px 13px;font-size:12.5px;color:var(--muted);font-weight:600;margin-top:4px;display:inline-block;background:var(--color-surface);text-align:center}
+@media (hover:hover){.addb:hover{border-color:var(--blue);color:var(--blue)}}
+.qcard .g2 .fld{width:100%}
+
+/* ══ moment layer v3 ══ */
+.tag.d{background:var(--color-blue-100);color:var(--blue)}
+.mbox{border:1px solid var(--line);border-radius:16px;margin-bottom:14px;overflow:hidden;background:var(--color-surface)}
+.mbox>.bh{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line)}
+.mbox>.bh .ic{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--color-white);flex:none}
+.mbox>.bh b{font-size:13.5px;font-weight:700;letter-spacing:-.2px}
+.mbox>.bh span{font-size:11.5px;color:var(--muted);margin-left:auto;text-align:right}
+.mbox.kLogic>.bh{background:var(--color-sunken)}.mbox.kLogic>.bh .ic{background:var(--ink)}
+.mbox.kPhone>.bh{background:var(--color-blue-50)}.mbox.kPhone>.bh .ic{background:var(--blue)}
+/* the orange icon square carries a glyph: ink on orange (Port note 1) */
+.mbox.kScreen>.bh{background:var(--color-orange-50)}.mbox.kScreen>.bh .ic{background:var(--orange);color:var(--color-on-accent)}
+.mbox.kAfter>.bh{background:color-mix(in srgb,var(--purple) 6%,var(--color-surface))}.mbox.kAfter>.bh .ic{background:var(--purple)}
+.mbox .bb{padding:15px 16px}
+.grp{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--color-line-soft)}
+.grp:last-child{padding-bottom:0;margin-bottom:0;border-bottom:none}
+.numrow{display:flex;align-items:center;gap:10px}
+.numrow input{width:96px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:15px;font-weight:700;outline:none;text-align:center}
+.numrow input:focus{border-color:var(--blue)}
+.numrow .sfx{font-size:12.5px;color:var(--muted)}
+.numrow .stp{border:1px solid var(--line);border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--muted);background:var(--color-surface);flex:none}
+@media (hover:hover){.numrow .stp:hover{border-color:var(--blue);color:var(--blue)}}
+.dpick{display:flex;align-items:center;gap:10px;width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--color-surface);margin-bottom:6px;text-align:left}
+.dpick.on{border-color:var(--blue);background:var(--color-blue-50)}
+.dpick .tk{width:16px;height:16px;border-radius:50%;border:2px solid var(--color-faint);flex:none}
+.dpick.on .tk{border-color:var(--blue);background:var(--blue);box-shadow:inset 0 0 0 3px var(--color-surface)}
+.dpick .tt{flex:1;min-width:0}
+.dpick .tt b{display:block;font-size:13px;font-weight:700}
+.dpick .tt span{display:block;font-size:10.5px;color:var(--muted)}
+.dpick .src{font-size:9px;letter-spacing:.7px;font-weight:700;border-radius:5px;padding:3px 7px;flex:none}
+.dpick .src.ok{background:var(--color-success-bg);color:var(--color-success)}
+.dpick .src.late{background:var(--color-danger-bg);color:var(--color-danger)}
+.wpick{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.wpick button{border:1px solid var(--line);border-radius:10px;padding:8px 11px;background:var(--color-surface);font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px}
+.wpick button.on{border-color:var(--purple);background:color-mix(in srgb,var(--purple) 6%,var(--color-surface));color:var(--purple)}
+.wpick button i{font-style:normal;font-size:13px}
+.phone .swipe{position:absolute;bottom:6px;left:0;right:0;display:flex;justify-content:center;gap:5px}
+.phone .swipe u{width:14px;height:3px;border-radius:2px;background:var(--line);display:block}
+.phone .swipe u.on{background:var(--blue);width:20px}
+.qrow.dec{align-items:flex-start}
+.qrow .n.set{background:var(--color-blue-100);color:var(--blue)}
+.qrow .n.rule{background:var(--color-track);color:var(--color-text-2)}
+.qrow .n.no{background:var(--color-danger-bg);color:var(--color-danger)}
+.qrow .dd{flex:1;min-width:0}
+.qrow .dd .qq{font-size:11.5px;color:var(--color-muted);line-height:1.5;margin-bottom:5px}
+.qrow .dd .aa{font-size:13px;color:var(--ink);line-height:1.6}
+.qrow .dd .kind{display:inline-block;font-size:8.5px;letter-spacing:1.1px;font-weight:700;border-radius:4px;padding:2px 7px;margin-top:7px}
+.qrow .dd .kind.set{background:var(--color-blue-100);color:var(--blue)}
+.qrow .dd .kind.rule{background:var(--color-track);color:var(--color-muted)}
+.qrow .dd .kind.no{background:var(--color-danger-bg);color:var(--color-danger)}
+.mbox .bb .hintbox:first-child,.mbox .bb .note:first-child,.mbox .bb .wrn:first-child{margin-top:0}
+.mombox .momr.wait{opacity:.92}
+.libc.wait,.libhd.wait .cv{opacity:.55}
+.waitflag{font-size:8px;letter-spacing:.7px;font-weight:700;background:color-mix(in srgb,var(--brown) 10%,var(--color-surface));color:var(--brown);border-radius:4px;padding:2px 6px;margin-left:6px}
+.dupb{cursor:pointer}
+.agrow{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px;background:var(--color-surface);flex-wrap:wrap}
+.agrow .n{width:22px;height:22px;border-radius:6px;background:var(--blue);color:var(--color-on-blue);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.agrow .tm{width:74px;flex:none;text-align:center}
+.agrow .ti{flex:2;min-width:140px}
+.agrow .sp{flex:1.4;min-width:110px}
+.agrow .x{border:1px solid var(--line);border-radius:6px;padding:5px 9px;font-size:10.5px;color:var(--muted);flex:none;background:var(--color-surface)}
+@media (hover:hover){.agrow .x:hover{border-color:var(--color-destructive);color:var(--color-danger)}}
+
+
+/* ============================================================================
+   APP ADDITIONS — what the app needs that the mockup never drew. Each is built
+   from the mockup's own values and marked with its source. docs/UI_KIT.md
+   lists them with the component that renders each.
+   ============================================================================ */
+
+/* The shell as an app, not a prototype page: the mockup's 40px prototype bar
+   (L20) is gone, so the grid fills the window, and the main column is the one
+   scroller (the run of show's drag auto-scroll reads it as `main`). Sticky
+   panels therefore sit a gutter from the top instead of under the old bar. */
+.app{height:100vh;height:100dvh;min-height:0;overflow:hidden}
+.app>.side{overflow-y:auto;min-height:0}
+.app>main{overflow-y:auto;min-width:0;min-height:0;position:relative}
+.app .ros,.app .modcard{top:18px}
+.app .lib{top:18px;max-height:calc(100dvh - 36px)}
+.app .savebar{top:10px}
+.br .nm{min-width:0}
+.br .nm b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Sign out: a real button at the foot of the rail, where a host looks for it (Belal) */
+.foot .signout{display:block;width:100%;margin-top:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--color-surface);font-size:12.5px;font-weight:600;color:var(--ink);text-align:center}
+@media (hover:hover){.foot .signout:hover{border-color:var(--blue);color:var(--blue)}}
+/* Below the mockup's breakpoint (L469) the rail is a drawer from the burger (DESIGN.md §6.1) */
+.mtop{display:none}
+@media(max-width:1180px){
+  .mtop{display:flex;align-items:center;gap:12px;padding:12px 18px;background:var(--color-surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40}
+  .mtop .burger{width:36px;height:36px;border:1px solid var(--line);border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex:none}
+  .mtop .burger i{display:block;width:16px;height:1.5px;background:var(--ink);border-radius:1px}
+  .app .side.open{display:flex;position:fixed;inset:0 auto 0 0;width:260px;z-index:260;box-shadow:var(--shadow-overlay)}
+  .pad{padding:18px 18px 60px}
+}
+
+/* The mockup's rail label `.g` (L54) also matches the secondary button `.btn.g` (L78), and
+   leaks its tracking and its 20px top margin onto every one: undo exactly those two. */
+.btn.g{letter-spacing:normal;margin-top:0}
+
+/* A disabled control keeps its shape and goes quiet (the mockup's .savebar .sv, L422) */
+.btn:disabled,.btn[aria-disabled="true"],.bignext:disabled,.act:disabled,.seg button:disabled,.tabs button:disabled{opacity:.45;cursor:default;transform:none;box-shadow:none;pointer-events:none}
+/* Smaller buttons for rows and cards (the row action of DESIGN.md §5.1: 11.5px, radius 8) */
+.btn.sm{padding:6px 11px;font-size:11.5px;border-radius:8px}
+/* Btn tones (DESIGN.md §13 6.2): `care` is a secondary with the destructive hover of
+   .savebar .dis (L420–421); `danger` is the confirm-delete fill (Port note 4); `ink` is
+   .nav.create's fill (L60); `armed` is the tap-again ring (fl's orange, L454). */
+@media (hover:hover){.btn.g.care:hover{border-color:var(--color-destructive);color:var(--color-destructive)}}
+.btn.danger{background:var(--color-danger);color:var(--color-white)}
+.btn.ink{background:var(--ink);color:var(--color-white)}
+.btn.armed{box-shadow:0 0 0 3px color-mix(in srgb,var(--orange) 55%,transparent)}
+.btn.block{display:block;width:100%}
+/* The quiet text action (.back, L380) used inline: no bottom margin */
+.back.flat{margin-bottom:0}
+.back.blue{color:var(--blue)}
+.back.warn{color:var(--color-orange-700)}
+.back:disabled{opacity:.45;cursor:default}
+/* Label tones (.lb, L81): blue names the live context (.now .k, L139), warn is .benefit b's
+   orange-700 (L143), ok is the success text (L3769) */
+.lb.blue{color:var(--blue)}
+.lb.warn{color:var(--color-orange-700)}
+.lb.ok{color:var(--color-success)}
+.lb.flat{margin-bottom:0}
+/* The danger card (L3705: a melon border and a danger label) */
+.card.danger{border-color:var(--color-destructive)}
+.card.danger>.lb{color:var(--color-danger)}
+.card.flush{padding:0;overflow:hidden}
+/* Status pills: the mockup's three inline pairs (L3769–3776) plus held in the orange tint */
+.pill{background:var(--color-chip);color:var(--color-muted)}
+.pill.ok{background:var(--color-success-bg);color:var(--color-success)}
+/* `onair`, not `live`: the mockup's own `.live` label (L114) would restyle a pill */
+.pill.onair{background:var(--color-danger-bg);color:var(--color-danger-strong)}
+.pill.held{background:var(--color-orange-100);color:var(--color-orange-700)}
+.pill.info{background:var(--color-blue-100);color:var(--blue)}
+.pill i{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:1px}
+.pill.onair i{background:var(--color-live);animation:pl 1.4s infinite}
+/* The live dot on its own (.livebtn .d, L63) */
+.ping{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--color-live);animation:pl 1.4s infinite;flex:none}
+.ping.warm{background:var(--orange)}
+.ping.off{background:var(--color-switch-off);animation:none}
+/* A switch row as one button (.swrow + .sw, L92–97) */
+button.swrow{width:100%;text-align:left}
+/* The label block of a switch row in a <button> is a <span>; the mockup's is a <div>
+   (L879), so it must not take `.swrow span`'s muted helper look */
+.swrow>span:first-child{flex:1;min-width:0;color:var(--ink);font-size:inherit}
+.swrow:disabled{opacity:.5;cursor:default}
+.sw.warn{background:var(--orange)}
+.swrow.caps b{font-size:9.5px;letter-spacing:1.4px;font-weight:700}
+/* Stat tile inside another card (.cmp div's sunken fill, L450) */
+.st.flat{background:var(--color-sunken);border-color:transparent}
+.st .s{font-size:11.5px;color:var(--muted);margin-top:2px}
+/* Tab counts */
+.tabs button em{font-style:normal;margin-left:6px;font-size:11px;color:var(--color-faint);font-weight:600}
+.tabs button.on em{color:var(--color-muted)}
+/* A small field for search boxes and rows */
+.fld.sm{padding:7px 11px;font-size:12.5px}
+.fld:disabled{background:var(--color-sunken);color:var(--color-muted)}
+/* The results bars (bars(), L3782–3787 — inline in the mockup) */
+.rbar{display:flex;align-items:center;gap:11px;font-size:12.5px;padding:5px 0}
+.rbar .nm{width:150px;color:var(--color-text-2);flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rbar .nm em{font-style:normal;margin-left:6px;font-size:10.5px;font-weight:700}
+.rbar .tr{flex:1;height:9px;border-radius:5px;background:var(--color-track);overflow:hidden}
+.rbar .tr u{display:block;height:100%;background:var(--blue);transition:width .4s}
+.rbar .tr u.o{background:var(--orange)}
+.rbar b{width:34px;text-align:right;flex:none}
+/* The events list row (paintSmall's evList, L3778–3781 — inline in the mockup) */
+.evrow{display:flex;align-items:center;gap:14px;padding:12px 4px;border-bottom:1px solid var(--color-line-soft)}
+.evrow:last-child{border-bottom:none}
+.evrow .tt{flex:1;min-width:0}
+.evrow .tt b{font-size:14px;display:block}
+.evrow .tt span{display:block;font-size:11.5px;color:var(--muted)}
+/* A round photo in the control room, 26px, initials underneath (DESIGN.md §13 6.2 Avatar) */
+.av{position:relative;width:26px;height:26px;border-radius:50%;overflow:hidden;flex:none;background:var(--color-chip);color:var(--color-text-2);font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.av.onair{box-shadow:0 0 0 2px var(--color-surface),0 0 0 3.5px var(--color-live)}
+.av.done{box-shadow:0 0 0 2px var(--color-surface),0 0 0 3.5px var(--color-success-accent)}
+/* A tick list as .anrow rows (L440–447), ticked in blue for an ordinary choice (DESIGN.md §5.5) */
+.checks{display:flex;flex-direction:column;gap:2px}
+.checks.grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px}
+.anrow.blue.on{background:var(--color-blue-50)}
+.anrow.blue.on .tick{background:var(--blue);border-color:var(--blue)}
+.anrow:disabled{opacity:.45;cursor:default}
+.anrow .an{flex:1;min-width:0;text-align:left}
+/* Dialogs as a class (#ask, L455–464), so more than one can exist */
+.ask{position:fixed;inset:0;background:var(--color-scrim);z-index:300;display:flex;align-items:center;justify-content:center;padding:22px;animation:fd .15s ease}
+.ask .box{background:var(--color-surface);border-radius:16px;padding:22px;max-width:420px;width:100%;box-shadow:var(--shadow-overlay);max-height:calc(100dvh - 44px);overflow-y:auto}
+.ask .box>b{font-size:17px;font-weight:700;letter-spacing:-.3px;display:block}
+.ask .box>p{font-size:13px;color:var(--muted);line-height:1.6;margin-top:8px}
+.ask .box .aa{display:flex;gap:8px;margin-top:18px}
+.ask .box .aa button{flex:1;padding:11px;border-radius:10px;font-size:13px;font-weight:700;text-align:center}
+.ask .box .aa .no{border:1px solid var(--color-line-strong);color:var(--ink);background:var(--color-surface)}
+.ask .box .aa .go{background:var(--blue);color:var(--color-on-blue)}
+.ask .box .aa .yes{background:var(--color-danger);color:var(--color-white)}
+.ask .box .aa button:disabled{opacity:.45;cursor:default}
+/* The side drawer: no mockup equivalent — the #ask box's look (L458) as a panel from the
+   inline-end, over the #ask scrim (L456) (DESIGN.md §13 6.2) */
+.scrim{position:fixed;inset:0;background:var(--color-scrim);z-index:250;animation:fd .15s ease}
+.drawer{position:fixed;top:0;bottom:0;inset-inline-end:0;width:min(440px,100vw);background:var(--color-surface);z-index:251;box-shadow:var(--shadow-overlay);
+overflow-y:auto;overscroll-behavior:contain;padding:22px;outline:none;animation:fd .22s ease}
+.drawer.wide{width:min(620px,100vw)}
+.drawer.bare{padding:0}
+/* The toast as a class (#toast, L465–467) */
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:var(--color-white);
+padding:11px 20px;border-radius:11px;font-size:13px;z-index:200;max-width:82vw;animation:fd .24s ease}
+/* A dropdown of actions (the .act tiles, L154–157, stacked in a panel) */
+.menu{position:absolute;z-index:60;background:var(--color-surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-overlay);padding:6px;min-width:260px}
+.menu button{display:block;width:100%;padding:10px 12px;border-radius:9px}
+@media (hover:hover){.menu button:hover{background:var(--color-hover)}}
+.menu button b{display:block;font-size:13px}
+.menu button span{display:block;font-size:11.5px;color:var(--muted);line-height:1.45}
+/* A run-sheet time ("09:30") is wider than the mockup's 22px number column in Inter */
+.rrow .nn{width:auto;min-width:22px}
+
+/* The run of show's rows (.srow, L252): the room's current moment is the run sheet's
+   `.rrow.now` (L165) — blue tint, blue border; an open row's actions hang under it. */
+.srow.now{background:var(--color-blue-100);border-color:var(--blue)}
+.srow.open{border-color:var(--blue);border-bottom-left-radius:0;border-bottom-right-radius:0}
+.srow.child{margin-left:20px;width:calc(100% - 20px)}
+/* A group of moments opened together: the run sheet's section bar (.ros .sbar, L294)
+   standing on its own, not inside the sticky panel */
+.grpbar{display:flex;align-items:center;gap:7px;background:var(--color-blue-100);border-radius:8px;padding:7px 10px;margin:12px 0 7px;font-size:10px;letter-spacing:1.2px;font-weight:700;color:var(--blue)}
+.grpbar>span{margin-left:auto;font-weight:600;letter-spacing:0;font-size:10.5px}
+.srow .chk{width:19px;height:19px;border-radius:6px;border:1.5px solid var(--color-line-strong);flex:none;font-size:11px;color:var(--color-white);display:flex;align-items:center;justify-content:center}
+.srow .chk.on{background:var(--blue);border-color:var(--blue)}
+.seqh b{line-height:1.4}
+/* .allset's header text in a <span> wrapper (buttons hold phrasing content only): the
+   wrapper is the title block, not a muted meta line (.allset .ah span, L343) */
+.allset .ah>span:not(.cv){color:var(--ink);font-size:inherit;min-width:0}
+.rule{height:1px;background:var(--color-line-soft);margin:14px 0;border:0}
+/* The live-card slot on the run page (foundation's SegmentDeck renders inside) */
+.deck{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+/* A dashed empty state (.dend, L278) that is not a drop zone */
+.empty{border:1px dashed var(--line);border-radius:12px;padding:18px;text-align:center;font-size:12.5px;color:var(--muted);line-height:1.6}
+/* An error line in the control room: the .wrn block, one sentence (DESIGN.md §7.4) */
+.wrn.line{margin-top:0;padding:9px 12px}
+
+} /* @layer components */

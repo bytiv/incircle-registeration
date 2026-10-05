@@ -1,0 +1,1996 @@
+/* ============================================================================
+   THE PUBLIC PAGE — incircle.community, rebuilt (components/site).
+
+   Calm and to the point: white space, one typeface, big type that says it in a
+   line, a photo that carries the feeling. Built from InCircle's own system
+   (incircle-application/incircle_design_refresh/foundations):
+
+     type      Gilroy only, 500–900 ("nothing lighter than 500"); headlines 800, tight
+     ink       #1A1A1A text · #3D3F40 soft · #5F6467 secondary · #8A9093 slate
+     the mark  the orb, drawn in code, and the wordmark set in Gilroy — no image asset
+     buttons   the ramp (lavender → cyan → mint, quarter strength, ink label) commits;
+               glass navigates; cyan is a ring or a mark, never a block
+     the page  white, with an icy band behind the form and the album — no blobs, no bubbles
+
+   Everything is prefixed `st-` and scoped to `.st-page`, so nothing reaches the control
+   room. The edit mode (`.st-editing`) and the host's bar (`.st-bar`) close the file.
+   ============================================================================ */
+
+.st-page {
+  --ink: #1a1a1a;
+  --ink-soft: #3d3f40;
+  --text: #5f6467;
+  --slate: #8a9093;
+  --muted: #9ca2a5;
+  --line: rgba(150, 158, 162, 0.22);
+  --line-soft: rgba(150, 158, 162, 0.13);
+  --band: #f3f9fc;
+  --field: #f5f9fb;
+  --cyan: #3de5ff;
+  --ramp: linear-gradient(100deg, #d9e7fb 0%, #c3f2ff 30%, #b4efff 55%, #cbf4ec 100%);
+  --ramp-hover: linear-gradient(100deg, #cfe1fa 0%, #aeeeff 30%, #9deaff 55%, #bcf0e6 100%);
+  --ramp-small: linear-gradient(100deg, #d9e7fb 0%, #c3f2ff 40%, #b4efff 70%, #cbf4ec 100%);
+  --ramp-ink: linear-gradient(90deg, #9ebbf1, #3de5ff 50%, #b5efdf);
+  --mark: linear-gradient(135deg, #3de5ff, #b5efdf);
+  --pearl:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0) 44%),
+    radial-gradient(circle at 20% 32%, rgba(255, 240, 214, 0.8), rgba(255, 240, 214, 0) 46%),
+    radial-gradient(circle at 74% 24%, rgba(214, 205, 244, 0.55), rgba(214, 205, 244, 0) 48%),
+    radial-gradient(circle at 66% 74%, rgba(93, 215, 255, 0.62), rgba(93, 215, 255, 0) 54%),
+    radial-gradient(circle at 26% 74%, rgba(181, 239, 223, 0.5), rgba(181, 239, 223, 0) 50%),
+    radial-gradient(circle at 50% 50%, #ffffff 0%, #f7fdff 58%, #edf8fe 100%);
+  --focus: 0 0 0 4px rgba(117, 226, 255, 0.2);
+  --shadow-card: 0 24px 60px rgba(146, 152, 214, 0.16), 0 4px 14px rgba(146, 152, 214, 0.08);
+  --shadow-photo: 0 30px 70px rgba(43, 45, 51, 0.13), 0 6px 18px rgba(43, 45, 51, 0.06);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --gutter: clamp(20px, 5vw, 48px);
+  --max: 1160px;
+  --nav-h: 60px;
+
+  position: relative;
+  min-height: 100dvh;
+  overflow-x: clip;
+  background: #ffffff;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+.st-page *,
+.st-page *::before,
+.st-page *::after {
+  box-sizing: border-box;
+}
+/* the resets weigh nothing (:where), so every class below keeps its own type and colour */
+:where(.st-page) img {
+  display: block;
+  max-width: 100%;
+}
+:where(.st-page) button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+:where(.st-page) a {
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.st-page :focus-visible {
+  outline: 2px solid rgba(61, 229, 255, 0.9);
+  outline-offset: 3px;
+}
+.st-page ::selection {
+  background: rgba(117, 226, 255, 0.35);
+}
+.st-wrap {
+  width: min(var(--max), 100%);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+.st-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── type ── */
+.st-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.st-h1 {
+  margin: 0;
+  font-size: clamp(40px, 6.6vw, 84px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.st-h2 {
+  margin: 0;
+  font-size: clamp(32px, 4.4vw, 56px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.st-lead {
+  margin: 0;
+  font-size: clamp(18px, 1.8vw, 22px);
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--text);
+  text-wrap: balance;
+}
+.st-body {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.65;
+  color: var(--text);
+  text-wrap: pretty;
+}
+.st-body strong,
+.st-lead strong {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ── the two buttons: the ramp commits, glass navigates ── */
+.st-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 28px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    transform 0.35s var(--ease),
+    box-shadow 0.35s var(--ease),
+    background-color 0.35s var(--ease),
+    border-color 0.35s var(--ease);
+}
+/* tracked capitals trail a gap; this puts the word back in the middle */
+.st-btn .lbl {
+  position: relative;
+  padding-left: 0.16em;
+}
+.st-btn .arr {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  transition: transform 0.35s var(--ease);
+}
+.st-btn-commit {
+  background: var(--ramp);
+  box-shadow:
+    0 10px 26px rgba(117, 226, 255, 0.32),
+    0 2px 6px rgba(146, 152, 214, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+/* its gloss: a crescent of light along the top */
+.st-btn-commit::before {
+  content: "";
+  position: absolute;
+  top: 1.5px;
+  right: 3px;
+  left: 3px;
+  height: 42%;
+  border-radius: 999px 999px 46% 46%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.18) 62%, transparent);
+  pointer-events: none;
+}
+.st-btn-glass {
+  border: 1px solid rgba(150, 158, 162, 0.24);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow:
+    inset 0 1.5px 3px rgba(255, 255, 255, 0.9),
+    0 6px 16px rgba(146, 152, 214, 0.08);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+@media (hover: hover) {
+  .st-btn-commit:hover {
+    background: var(--ramp-hover);
+    box-shadow:
+      0 14px 32px rgba(117, 226, 255, 0.42),
+      0 2px 6px rgba(146, 152, 214, 0.14),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+    transform: translateY(-1px);
+  }
+  .st-btn-glass:hover {
+    border-color: rgba(150, 158, 162, 0.34);
+    background: #ffffff;
+    box-shadow:
+      inset 0 1.5px 3px rgba(255, 255, 255, 0.9),
+      0 10px 24px rgba(146, 152, 214, 0.14);
+    transform: translateY(-1px);
+  }
+  .st-btn:hover .arr {
+    transform: translateX(3px);
+  }
+}
+.st-btn:active {
+  transform: scale(0.97);
+}
+.st-btn-commit:active {
+  box-shadow:
+    0 4px 12px rgba(117, 226, 255, 0.24),
+    inset 0 2px 5px rgba(120, 160, 180, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+.st-btn-commit:active::before {
+  opacity: 0;
+}
+.st-btn-sm {
+  height: 38px;
+  padding: 0 18px;
+  font-size: 11.5px;
+  letter-spacing: 0.18em;
+}
+.st-btn-sm .lbl {
+  padding-left: 0.18em;
+}
+/* the ramp never renders disabled: it flattens */
+.st-btn[disabled] {
+  border: 1px solid rgba(214, 222, 226, 0.7);
+  background: #eff4f6;
+  box-shadow: none;
+  color: var(--muted);
+  cursor: progress;
+  transform: none;
+}
+.st-btn[disabled]::before {
+  display: none;
+}
+
+/* ── reveal on scroll (never in edit mode, never with reduced motion) ── */
+.st-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 1s var(--ease),
+    transform 1s var(--ease);
+}
+.st-reveal.is-in,
+.st-editing .st-reveal {
+  opacity: 1;
+  transform: none;
+}
+@keyframes stRise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+@keyframes stFade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ══ THE TOP BAR ═══════════════════════════════════════════════════════════ */
+.st-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: saturate(1.8) blur(20px);
+  backdrop-filter: saturate(1.8) blur(20px);
+  transition: border-color 0.3s var(--ease);
+}
+.st-nav.is-scrolled {
+  border-bottom-color: var(--line-soft);
+  background: rgba(255, 255, 255, 0.88);
+}
+.st-nav-in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: var(--nav-h);
+}
+/* the header mark: the orb and the wordmark, side by side (InCircle's A10, variant 4) */
+.st-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+/* THE ORB — InCircle's mark, drawn in code the way the brand draws it: a white sphere lit from
+   the upper left, its colour only at the rim (peach, lavender, cyan, mint — the cyan strongest,
+   low on the right), its edge dissolving into the page. No ring, no outline. */
+.st-orb {
+  --s: 26px;
+  position: relative;
+  display: block;
+  width: var(--s);
+  height: var(--s);
+  flex: none;
+  border-radius: 50%;
+  isolation: isolate;
+}
+.st-orb::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #f8def0,
+    #dcd0f7 12%,
+    #c4d6fb 25%,
+    #8fdcff 38%,
+    #a0e8f5 48%,
+    #c4f1e5 60%,
+    #eef9f0 74%,
+    #ffe6c6 87%,
+    #f8def0
+  );
+  filter: blur(calc(var(--s) * 0.04));
+}
+.st-orb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse 62% 62% at 42% 40%,
+    #ffffff 0%,
+    #ffffff 42%,
+    rgba(255, 255, 255, 0.72) 70%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+.st-orb:not(.lg)::after {
+  background: radial-gradient(
+    ellipse 58% 58% at 42% 40%,
+    #ffffff 0%,
+    #ffffff 36%,
+    rgba(255, 255, 255, 0.7) 66%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+/* a light that falls from it, so it sits on white without a line around it */
+.st-orb.glow {
+  box-shadow: 0 calc(var(--s) * 0.14) calc(var(--s) * 0.5) rgba(117, 226, 255, 0.26);
+}
+.st-orb.lg {
+  --s: 92px;
+}
+/* the big one is alive: its colours drift slowly round the rim, and it breathes */
+.st-orb.alive {
+  animation: stBreathe 8s ease-in-out infinite;
+}
+.st-orb.alive::before {
+  animation: stTurn 28s linear infinite;
+  will-change: transform;
+}
+@keyframes stTurn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@keyframes stBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}
+@media (max-width: 600px) {
+  .st-orb.lg {
+    --s: 78px;
+  }
+}
+.st-mark b {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1;
+  color: var(--ink-soft);
+}
+
+/* ══ THE INVITATION ════════════════════════════════════════════════════════ */
+.st-hero {
+  position: relative;
+  z-index: 1;
+  padding-top: clamp(44px, 8vh, 96px);
+  text-align: center;
+  background: radial-gradient(1100px 560px at 50% -12%, rgba(117, 226, 255, 0.14), rgba(117, 226, 255, 0) 70%);
+}
+.st-hero-in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.st-hero-in > *,
+.st-hero-shot {
+  animation: stRise 0.9s var(--ease) both;
+}
+.st-hero-in > :nth-child(2) {
+  animation-delay: 0.06s;
+}
+.st-hero-in > :nth-child(3) {
+  animation-delay: 0.12s;
+}
+.st-hero-in > :nth-child(4) {
+  animation-delay: 0.18s;
+}
+.st-hero-in > :nth-child(5) {
+  animation-delay: 0.24s;
+}
+.st-hero-in > :nth-child(6) {
+  animation-delay: 0.3s;
+}
+.st-hero-shot {
+  animation-delay: 0.4s;
+}
+/* the words come into focus as they rise */
+.st-hero .st-h1,
+.st-hero .st-lead {
+  animation-name: stFocus;
+}
+@keyframes stFocus {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(14px);
+  }
+}
+.st-hero-mark {
+  margin-bottom: 28px;
+}
+.st-hero .st-eyebrow {
+  margin-bottom: 16px;
+  padding-left: 0.24em;
+}
+.st-hero .st-h1 {
+  max-width: 13.5em;
+}
+.st-hero .st-lead {
+  max-width: 30em;
+  margin-top: 22px;
+}
+.st-when {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 22px 0 0;
+  padding: 8px 15px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.st-when i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(117, 226, 255, 0.25);
+}
+.st-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 22px;
+  margin-top: 34px;
+}
+/* the quiet second action: words and a chevron */
+.st-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 52px;
+  padding: 0 4px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color 0.3s var(--ease);
+}
+.st-link svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.35s var(--ease);
+}
+@media (hover: hover) {
+  .st-link:hover {
+    color: var(--ink);
+  }
+  .st-link:hover svg {
+    transform: translateX(3px);
+  }
+}
+.st-hero-shot {
+  margin-top: clamp(48px, 7vw, 80px);
+}
+.st-frame {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: 32px;
+  background: #e8f1f5;
+  box-shadow: var(--shadow-photo);
+}
+.st-frame img {
+  object-fit: cover;
+  object-position: 50% 32%;
+}
+@supports (animation-timeline: view()) {
+  .st-frame {
+    animation: stSettle linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 42%;
+  }
+  @keyframes stSettle {
+    from {
+      transform: scale(0.94);
+    }
+    to {
+      transform: none;
+    }
+  }
+  .st-editing .st-frame {
+    animation: none;
+  }
+}
+@media (max-width: 760px) {
+  .st-frame {
+    aspect-ratio: 4 / 3;
+    border-radius: 24px;
+  }
+}
+@media (max-width: 480px) {
+  .st-cta {
+    flex-direction: column;
+    width: 100%;
+    max-width: 340px;
+  }
+  .st-cta .st-btn {
+    width: 100%;
+  }
+  .st-cta .st-link {
+    height: 44px;
+  }
+}
+
+/* ══ THE REGISTRATION ══════════════════════════════════════════════════════ */
+/* the icy band begins behind the hero photo's lower edge, so the photo sits across two grounds */
+.st-join {
+  --tuck: clamp(72px, 9vw, 120px);
+  position: relative;
+  margin-top: calc(var(--tuck) * -1);
+  padding: calc(clamp(80px, 11vw, 140px) + var(--tuck)) 0 clamp(80px, 11vw, 140px);
+  background: var(--band);
+}
+.st-join-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 540px);
+  gap: clamp(40px, 7vw, 96px);
+  align-items: start;
+}
+.st-join-copy {
+  position: sticky;
+  top: calc(var(--nav-h) + 48px);
+}
+.st-join-copy .st-h2 {
+  margin-top: 16px;
+}
+.st-paras {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+@media (max-width: 960px) {
+  .st-join-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .st-join-copy {
+    position: static;
+    max-width: 640px;
+  }
+}
+
+/* the form card */
+.st-card {
+  position: relative;
+  border: 1px solid rgba(150, 158, 162, 0.12);
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: var(--shadow-card);
+}
+.st-form {
+  container-type: inline-size;
+  padding: clamp(24px, 3.6vw, 40px);
+  scroll-margin-top: calc(var(--nav-h) + 20px);
+}
+.st-note {
+  margin: 0 0 22px;
+  padding: 12px 16px;
+  border: 1px solid rgba(252, 185, 169, 0.6);
+  border-radius: 14px;
+  background: #fff7f4;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #9a5a43;
+}
+.st-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 14px;
+}
+.st-field {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.st-field.half {
+  grid-column: span 1;
+}
+@container (max-width: 480px) {
+  .st-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .st-field.half {
+    grid-column: 1 / -1;
+  }
+}
+.st-label {
+  display: block;
+  margin: 0 0 8px 2px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+.st-optional {
+  margin-left: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.st-input {
+  display: block;
+  width: 100%;
+  height: 58px;
+  padding: 22px 16px 6px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  outline: none;
+  background: var(--field);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  transition:
+    border-color 0.25s var(--ease),
+    box-shadow 0.25s var(--ease),
+    background-color 0.25s var(--ease);
+}
+.st-input::placeholder {
+  font-weight: 500;
+  color: #a7aeb2;
+}
+@media (hover: hover) {
+  .st-input:hover {
+    border-color: rgba(150, 158, 162, 0.36);
+  }
+}
+.st-input:focus {
+  border-color: rgba(117, 226, 255, 0.85);
+  background: #ffffff;
+  box-shadow: var(--focus);
+}
+.st-page .st-input:focus-visible {
+  outline: none;
+}
+.st-input[aria-invalid="true"] {
+  border-color: rgba(232, 138, 138, 0.75);
+  box-shadow: 0 0 0 4px rgba(232, 138, 138, 0.12);
+}
+.st-float {
+  position: relative;
+}
+.st-float > label {
+  position: absolute;
+  top: 0;
+  right: 16px;
+  left: 17px;
+  display: flex;
+  align-items: center;
+  height: 58px;
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--slate);
+  pointer-events: none;
+  transform-origin: 0 50%;
+  transition:
+    transform 0.28s var(--ease),
+    color 0.28s var(--ease);
+}
+.st-float > label .st-optional {
+  margin-left: 6px;
+  font-size: inherit;
+  font-weight: 500;
+  color: #b1b8bb;
+}
+/* its hint shows only once the field is in use */
+.st-float .st-input::placeholder {
+  color: transparent;
+  transition: color 0.2s var(--ease);
+}
+.st-float .st-input:focus::placeholder {
+  color: #a7aeb2;
+}
+.st-float .st-input:focus + label,
+.st-float .st-input:not(:placeholder-shown) + label,
+.st-float .st-input:-webkit-autofill + label {
+  transform: translateY(-11px) scale(0.75);
+}
+.st-float .st-input:focus + label {
+  color: var(--text);
+}
+.st-float .st-input[aria-invalid="true"] + label {
+  color: #c0645f;
+}
+/* a field's own message, under it */
+.st-ferr {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 7px 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #c0645f;
+  animation: stRise 0.35s var(--ease) both;
+}
+.st-ferr::before {
+  content: "!";
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  flex: none;
+  border-radius: 50%;
+  background: #c0645f;
+  font-size: 10px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+/* the one choice: two tiles */
+.st-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@container (max-width: 420px) {
+  .st-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.st-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--field);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    border-color 0.25s var(--ease),
+    background-color 0.25s var(--ease),
+    box-shadow 0.25s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.st-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.st-tick {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border: 1.5px solid #c3cbcf;
+  border-radius: 50%;
+  background: #ffffff;
+  transition:
+    border-color 0.25s var(--ease),
+    background 0.25s var(--ease);
+}
+.st-tick svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0;
+  transform: scale(0.5);
+  transition:
+    opacity 0.25s var(--ease),
+    transform 0.35s var(--ease);
+}
+@media (hover: hover) {
+  .st-option:hover {
+    border-color: rgba(150, 158, 162, 0.36);
+  }
+}
+.st-option:has(input:checked) {
+  border-color: transparent;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 2px rgba(61, 229, 255, 0.85),
+    0 0 0 7px rgba(117, 226, 255, 0.14);
+  color: var(--ink);
+}
+.st-option:has(input:checked) .st-tick {
+  border-color: transparent;
+  background: var(--mark);
+}
+.st-option:has(input:checked) .st-tick svg {
+  opacity: 1;
+  transform: none;
+}
+.st-option:has(input:focus-visible) {
+  outline: 2px solid rgba(61, 229, 255, 0.9);
+  outline-offset: 3px;
+}
+.st-options.bad .st-option {
+  border-color: rgba(232, 138, 138, 0.6);
+}
+
+/* the photo: a face, a line, a button */
+.st-photo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--field);
+}
+.st-photo.bad {
+  border-color: rgba(232, 138, 138, 0.6);
+}
+.st-face {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  flex: none;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--pearl);
+  box-shadow:
+    inset 0 0 0 1.5px rgba(255, 255, 255, 0.9),
+    0 4px 12px rgba(117, 226, 255, 0.3);
+  color: #9fb4bc;
+}
+.st-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.st-face svg {
+  width: 26px;
+  height: 26px;
+}
+.st-photo-txt {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+  min-width: 0;
+}
+.st-photo-txt b {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink-soft);
+}
+.st-photo-txt small {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--muted);
+}
+@container (max-width: 380px) {
+  .st-photo {
+    flex-wrap: wrap;
+  }
+  .st-photo .st-btn {
+    width: 100%;
+  }
+}
+
+.st-error {
+  margin: 18px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #c0645f;
+}
+.st-submit {
+  width: 100%;
+  height: 56px;
+  margin-top: 26px;
+}
+.st-submit[aria-busy="true"] {
+  cursor: progress;
+}
+.st-spin {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(26, 26, 26, 0.16);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: stSpin 0.8s linear infinite;
+}
+@keyframes stSpin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* after a sign-up, and while registration is closed */
+.st-done,
+.st-closed {
+  padding: clamp(36px, 5vw, 60px) clamp(24px, 4vw, 44px);
+  text-align: center;
+  animation: stRise 0.7s var(--ease) both;
+}
+.st-done-mark {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 24px;
+  border-radius: 50%;
+  background: var(--mark);
+  box-shadow: 0 12px 30px rgba(117, 226, 255, 0.4);
+  color: var(--ink);
+}
+.st-done-mark svg {
+  width: 28px;
+  height: 28px;
+}
+.st-done .st-done-mark {
+  animation: stPop 0.6s var(--ease) both;
+}
+.st-done .st-done-mark path {
+  stroke-dasharray: 22;
+  stroke-dashoffset: 22;
+  animation: stDraw 0.5s 0.3s var(--ease) forwards;
+}
+@keyframes stPop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+@keyframes stDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.st-closed-mark {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: var(--band);
+  color: var(--slate);
+}
+.st-closed-mark svg {
+  width: 24px;
+  height: 24px;
+}
+.st-done h3,
+.st-closed h3 {
+  margin: 0;
+  font-size: clamp(24px, 2.8vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.st-done p {
+  max-width: 26em;
+  margin: 12px auto 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text);
+}
+.st-done .st-btn {
+  margin-top: 28px;
+}
+
+/* ══ ABOUT ═════════════════════════════════════════════════════════════════ */
+.st-about {
+  padding: clamp(96px, 13vw, 168px) 0;
+}
+.st-about .st-eyebrow {
+  margin-bottom: 24px;
+}
+/* one statement, its key words in ink */
+.st-statement {
+  max-width: 22em;
+  margin: 0;
+  font-size: clamp(26px, 3.4vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.022em;
+  line-height: 1.22;
+  color: var(--slate);
+  text-wrap: pretty;
+}
+.st-statement strong {
+  font-weight: 800;
+  color: var(--ink);
+}
+.st-about-more {
+  max-width: 38em;
+  margin-top: clamp(24px, 3vw, 36px);
+  font-size: clamp(17px, 1.6vw, 20px);
+}
+
+/* ══ THE ALBUM ═════════════════════════════════════════════════════════════ */
+.st-album {
+  padding: clamp(80px, 11vw, 140px) 0 clamp(40px, 6vw, 96px);
+  background: var(--band);
+}
+.st-album-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: clamp(12px, 2vw, 24px);
+}
+.st-arrows {
+  display: flex;
+  flex: none;
+  gap: 10px;
+}
+.st-arrow {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 0 1.5px 3px rgba(255, 255, 255, 0.9),
+    0 6px 16px rgba(146, 152, 214, 0.1);
+  color: var(--ink-soft);
+  transition:
+    background-color 0.25s var(--ease),
+    opacity 0.25s var(--ease),
+    transform 0.25s var(--ease);
+}
+.st-arrow svg {
+  width: 18px;
+  height: 18px;
+}
+@media (hover: hover) {
+  .st-arrow:not([disabled]):hover {
+    background: #ffffff;
+  }
+}
+.st-arrow:not([disabled]):active {
+  transform: scale(0.94);
+}
+.st-arrow[disabled] {
+  opacity: 0.35;
+  cursor: default;
+}
+/* the strip: the photos at their own shape, one height, starting in line with the page */
+.st-track {
+  --edge: max(var(--gutter), calc((100% - var(--max)) / 2 + var(--gutter)));
+  display: flex;
+  gap: clamp(12px, 1.4vw, 18px);
+  padding: 24px var(--edge) 64px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-padding-inline: var(--edge);
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.st-track::-webkit-scrollbar {
+  display: none;
+}
+/* on a laptop the strip is held and slid with the mouse (Album.tsx useGrab) */
+@media (hover: hover) and (pointer: fine) {
+  .st-track {
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .st-track .st-shot {
+    cursor: inherit;
+  }
+}
+.st-track.is-grabbing {
+  cursor: grabbing;
+  scroll-snap-type: none;
+}
+.st-track.is-grabbing .st-shot {
+  pointer-events: none;
+}
+.st-shot img {
+  -webkit-user-drag: none;
+}
+.st-shot {
+  position: relative;
+  flex: none;
+  height: clamp(300px, 32vw, 440px);
+  max-width: min(86vw, 820px);
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 24px;
+  background: #e2eef3;
+  box-shadow: 0 16px 36px rgba(43, 45, 51, 0.1);
+  scroll-snap-align: start;
+  cursor: zoom-in;
+}
+.st-shot img {
+  object-fit: cover;
+  transition: transform 0.9s var(--ease);
+}
+@media (hover: hover) {
+  .st-shot:hover img {
+    transform: scale(1.03);
+  }
+}
+@media (max-width: 760px) {
+  .st-arrows {
+    display: none;
+  }
+  .st-shot {
+    height: 300px;
+    border-radius: 20px;
+  }
+}
+
+/* one photo at a time, as large as the screen allows */
+.st-lb.is-closing {
+  animation: stFadeOut 0.22s var(--ease) forwards;
+}
+@keyframes stFadeOut {
+  to {
+    opacity: 0;
+  }
+}
+.st-lb {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 12, 16, 0.92);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  animation: stFade 0.3s var(--ease) both;
+  touch-action: pan-y;
+}
+.st-lb img {
+  width: auto;
+  height: auto;
+  max-width: min(92vw, 1600px);
+  max-height: 84dvh;
+  border-radius: 16px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+  animation: stZoom 0.45s var(--ease) both;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+@keyframes stZoom {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+.st-lb-btn {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  transition: background-color 0.25s var(--ease);
+}
+.st-lb-btn svg {
+  width: 18px;
+  height: 18px;
+}
+@media (hover: hover) {
+  .st-lb-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+.st-lb-close {
+  top: max(16px, env(safe-area-inset-top));
+  right: 16px;
+}
+.st-lb-prev {
+  top: 50%;
+  left: 16px;
+  translate: 0 -50%;
+}
+.st-lb-next {
+  top: 50%;
+  right: 16px;
+  translate: 0 -50%;
+}
+.st-lb-count {
+  position: absolute;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  left: 50%;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  font-variant-numeric: tabular-nums;
+  translate: -50% 0;
+}
+@media (max-width: 760px) {
+  .st-lb-prev,
+  .st-lb-next {
+    display: none;
+  }
+}
+
+/* ══ THE FOOT ══════════════════════════════════════════════════════════════ */
+.st-foot {
+  padding: 36px 0 calc(36px + env(safe-area-inset-bottom));
+}
+.st-foot-in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+/* the corner signature: the wordmark in the ramp, COMMUNITY tracked (InCircle's A10, variant 3) */
+.st-sign {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.st-sign b {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1;
+  background: var(--ramp-ink);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.st-sign span {
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.st-foot p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.st-foot p b {
+  margin-left: 4px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+@media (max-width: 600px) {
+  .st-foot-in {
+    flex-direction: column;
+    text-align: center;
+  }
+  .st-sign {
+    align-items: center;
+  }
+  .st-sign span {
+    padding-left: 0.3em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .st-page *,
+  .st-page *::before,
+  .st-page *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+html:has(.st-page) {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html:has(.st-page) {
+    scroll-behavior: auto;
+  }
+}
+
+/* ══ EDIT MODE (a signed-in host) ═══════════════════════════════════════════ */
+
+/* room under the page for the bar */
+.st-page.st-hosted {
+  padding-bottom: 104px;
+}
+/* in edit mode nothing moves on its own, or under the pointer */
+.st-editing .st-hero-in > *,
+.st-editing .st-hero-shot {
+  animation: none;
+}
+.st-editing .st-btn:hover,
+.st-editing .st-btn:active {
+  transform: none;
+}
+
+/* every word that can be changed says so, quietly: a faint dashed line around it */
+.st-editing .mo-ed,
+.st-editing .st-rich[contenteditable] {
+  border-radius: 6px;
+  outline: 1.5px dashed rgba(61, 229, 255, 0.5);
+  outline-offset: 4px;
+  box-shadow: none;
+  caret-color: #0ea5c6;
+}
+@media (hover: hover) {
+  .st-editing .mo-ed:hover,
+  .st-editing .st-rich[contenteditable]:hover {
+    outline-color: rgba(61, 229, 255, 0.85);
+    box-shadow: none;
+  }
+}
+.st-editing .mo-ed:focus,
+.st-editing .st-rich[contenteditable]:focus {
+  outline: 2px solid rgba(61, 229, 255, 0.95);
+  outline-offset: 4px;
+  background-color: rgba(255, 255, 255, 0.7);
+  box-shadow: none;
+}
+.st-editing .st-btn .mo-ed {
+  outline-offset: 2px;
+}
+
+/* a paragraph with bold words, typed into where it shows */
+.st-rich[contenteditable] {
+  position: relative;
+  cursor: text;
+}
+.st-rich[data-empty]::before {
+  content: attr(data-placeholder);
+  color: #a7aeb2;
+  pointer-events: none;
+}
+.st-richwrap {
+  position: relative;
+}
+.st-rtools {
+  position: absolute;
+  top: -40px;
+  right: -4px;
+  z-index: 5;
+  display: flex;
+  gap: 6px;
+  animation: stFade 0.18s var(--ease) both;
+}
+.st-rtools button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(26, 26, 26, 0.9);
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(26, 26, 26, 0.2);
+}
+.st-rtools button small {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+.st-rtools button.warm {
+  border: 1px solid rgba(252, 185, 169, 0.9);
+  background: #ffffff;
+  color: #b0603f;
+}
+
+/* a list's own control: add one */
+.st-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  margin-top: 20px;
+  padding: 0 18px;
+  border: 1.5px dashed rgba(61, 229, 255, 0.65);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+  font-weight: 800;
+  color: #0e8fae;
+  transition: background-color 0.2s var(--ease);
+}
+@media (hover: hover) {
+  .st-add:hover {
+    background: #ffffff;
+  }
+}
+.st-add[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* small controls: a chip */
+.st-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(146, 152, 214, 0.1);
+  transition:
+    background 0.2s var(--ease),
+    border-color 0.2s var(--ease);
+}
+@media (hover: hover) {
+  .st-chip:hover {
+    border-color: rgba(150, 158, 162, 0.36);
+  }
+}
+.st-chip.on {
+  border-color: transparent;
+  background: var(--ramp-small);
+  color: var(--ink);
+}
+.st-chip.warm {
+  border-color: rgba(252, 185, 169, 0.85);
+  color: #b0603f;
+}
+.st-chip.dark {
+  border-color: transparent;
+  background: rgba(26, 26, 26, 0.88);
+  color: #ffffff;
+}
+.st-chip[disabled] {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* the hero photo, replaceable */
+.st-imgedit {
+  position: relative;
+}
+.st-imgtools {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  gap: 8px;
+  translate: -50% 0;
+}
+.st-imgedit .st-error {
+  position: absolute;
+  right: 0;
+  bottom: -34px;
+  left: 0;
+  text-align: center;
+}
+
+/* the form, edited: one field per card, held to move */
+.st-frows {
+  display: grid;
+  gap: 12px;
+}
+.st-frow {
+  position: relative;
+  padding: 14px 14px 16px;
+  border: 1px dashed rgba(150, 158, 162, 0.38);
+  border-radius: 18px;
+  background: #ffffff;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+}
+.st-frow .mo-ed,
+.st-frow .st-rich {
+  user-select: text;
+  -webkit-user-select: text;
+}
+.st-frow.lifted {
+  border-style: solid;
+  border-color: transparent;
+  box-shadow: 0 24px 50px rgba(43, 45, 51, 0.14);
+  cursor: grabbing;
+}
+.st-frow:focus-visible {
+  border-color: rgba(61, 229, 255, 0.9);
+}
+.st-frow-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.st-frow-top .st-label {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+@container (max-width: 400px) {
+  .st-frow-top {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+  .st-frow-top .st-label {
+    flex: 1 1 calc(100% - 30px);
+  }
+}
+.st-grip {
+  display: flex;
+  padding: 2px;
+  color: #b5bec2;
+  touch-action: none;
+}
+.st-fake {
+  display: grid;
+  gap: 4px;
+  min-height: 58px;
+  padding: 9px 16px 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--field);
+  overflow-wrap: anywhere;
+}
+.st-fake-label {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--slate);
+}
+.st-fake-hint {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: #a7aeb2;
+}
+.st-fake .mo-ed {
+  min-width: 6ch;
+}
+.st-kind {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.st-addfields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.st-addfields > span {
+  margin-right: 2px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.st-editnote {
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  border: 1px solid rgba(117, 226, 255, 0.4);
+  border-radius: 14px;
+  background: rgba(234, 247, 252, 0.8);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: #2d6f80;
+}
+
+/* the album, edited: every photo with its controls, one tile to add more */
+.st-albumedit {
+  display: grid;
+  margin-top: clamp(20px, 3vw, 32px);
+  grid-template-columns: repeat(auto-fill, minmax(min(46%, 180px), 1fr));
+  gap: 14px;
+}
+.st-tile {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  border-radius: 16px;
+  background: #e2eef3;
+  box-shadow: 0 8px 20px rgba(43, 45, 51, 0.08);
+  cursor: grab;
+}
+.st-tile.drag {
+  opacity: 0.4;
+}
+.st-tile.over {
+  box-shadow: 0 0 0 3px rgba(61, 229, 255, 0.9);
+}
+.st-tile img {
+  object-fit: cover;
+  pointer-events: none;
+}
+.st-tile-n {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(26, 26, 26, 0.6);
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+.st-tile-acts {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  left: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+.st-tile-acts .grp {
+  display: flex;
+  gap: 6px;
+}
+.st-tile-acts button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink);
+  box-shadow: 0 4px 12px rgba(26, 26, 26, 0.14);
+}
+.st-tile-acts button svg {
+  width: 14px;
+  height: 14px;
+}
+.st-tile-acts button.warm {
+  color: #b0603f;
+}
+.st-tile-acts button[disabled] {
+  opacity: 0.4;
+  cursor: default;
+}
+.st-addtile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  aspect-ratio: 4 / 3;
+  padding: 10px;
+  border: 2px dashed rgba(61, 229, 255, 0.6);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  font-weight: 800;
+  color: #0e8fae;
+  text-align: center;
+}
+.st-addtile b {
+  font-size: 26px;
+  line-height: 1;
+}
+.st-addtile small {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.st-addtile.busy {
+  cursor: progress;
+}
+.st-addtile.drop {
+  border-color: rgba(61, 229, 255, 0.95);
+  background: #ffffff;
+}
+
+/* the words a visitor only sees at times — set here in edit mode */
+.st-msgsec {
+  padding: clamp(64px, 9vw, 112px) 0 0;
+}
+.st-msgs {
+  padding: clamp(22px, 4vw, 36px);
+}
+.st-msgs h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.st-msg {
+  padding: 16px 0;
+  border-top: 1px solid var(--line-soft);
+}
+.st-msg:first-of-type {
+  border-top: 0;
+}
+.st-msg .k {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.st-msg .v {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* the editor's floating hints (a line nearing its limit) draw here, over the page */
+.st-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+/* ══ THE HOST'S BAR ════════════════════════════════════════════════════════ */
+.st-bar {
+  position: fixed;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: calc(100vw - 24px);
+  padding: 8px 8px 8px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(26, 26, 26, 0.88);
+  -webkit-backdrop-filter: saturate(1.6) blur(18px);
+  backdrop-filter: saturate(1.6) blur(18px);
+  box-shadow: 0 18px 50px rgba(26, 26, 26, 0.3);
+  color: #ffffff;
+  font-family: var(--font-sans);
+  translate: -50% 0;
+  animation: stBarIn 0.5s var(--ease) both;
+}
+@keyframes stBarIn {
+  from {
+    opacity: 0;
+    translate: -50% 16px;
+  }
+}
+.st-bar-who {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.st-bar-who i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3de5ff;
+  box-shadow: 0 0 0 3px rgba(61, 229, 255, 0.25);
+}
+.st-bar-who i.off {
+  background: #fcb9a9;
+  box-shadow: 0 0 0 3px rgba(252, 185, 169, 0.25);
+}
+.st-seg {
+  position: relative;
+  display: flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+}
+.st-seg button {
+  position: relative;
+  height: 34px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.72);
+}
+.st-seg button.on {
+  color: var(--ink, #1a1a1a);
+}
+.st-seg .thumb {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: #ffffff;
+}
+.st-seg .tl {
+  position: relative;
+  z-index: 1;
+}
+.st-bar-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+}
+.st-bar-save i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6fe0bd;
+}
+.st-bar-save[data-state="saving"] i {
+  background: #3de5ff;
+  animation: stPulse 1s ease-in-out infinite;
+}
+.st-bar-save[data-state="failed"],
+.st-bar-save[data-state="signedout"] {
+  color: #fcb9a9;
+}
+.st-bar-save[data-state="failed"] i,
+.st-bar-save[data-state="signedout"] i {
+  background: #fcb9a9;
+}
+.st-bar-save button,
+.st-bar-save a {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: #ffffff;
+  text-decoration: underline;
+}
+@keyframes stPulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+.st-bar-link {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffffff;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.2s var(--ease);
+}
+@media (hover: hover) {
+  .st-bar-link:hover {
+    background: rgba(255, 255, 255, 0.18);
+  }
+}
+@media (max-width: 640px) {
+  .st-bar {
+    right: 12px;
+    left: 12px;
+    justify-content: space-between;
+    gap: 8px;
+    padding-left: 12px;
+    translate: none;
+    animation-name: stBarInPhone;
+  }
+  .st-bar-who span,
+  .st-bar-save span {
+    display: none;
+  }
+  .st-seg button {
+    padding: 0 13px;
+  }
+}
+@keyframes stBarInPhone {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
