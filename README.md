@@ -9,8 +9,9 @@ before the full event app moves over — dressed in InCircle's design.
   shows a bar at the bottom: **Preview** is the page exactly as a visitor sees it; **Edit** makes
   every part editable where it shows — click any words and type (select words and press ⌘B /
   Ctrl+B for bold), replace the hero picture, add, remove and reorder paragraphs, cards and album
-  photos, and arrange the form (drag a field, Required on/off, Hide, + Add a field). Everything
-  saves itself as you go; the bar says Saved, or what went wrong.
+  photos, and arrange the form (drag a field, Required on/off, Hide, + Add a field). Nothing
+  goes out as you type: the page is public, so your edits stay a draft until you press **Save** in
+  the bar and confirm — or **Discard** to put the page back. The bar says what went wrong.
 - `/admin` — the control room, behind the passcode:
   - **Registration page** — publish the form or take it down, open the page to edit or preview
     it, set approval and seats, and work the queue: New → Approve → Confirm (or Decline).

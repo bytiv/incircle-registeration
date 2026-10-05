@@ -1853,3 +1853,92 @@ html:has(.st-page) {
     transform: translateY(16px);
   }
 }
+
+/* Save — the one filled button on the bar, there only while something is unsaved. */
+.st-bar-go {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ramp);
+  box-shadow:
+    0 6px 16px rgba(117, 226, 255, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink, #1a1a1a);
+  white-space: nowrap;
+}
+.st-bar-save[data-state="unsaved"] i {
+  background: #ffd36e;
+}
+
+/* ══ SAVE THE CHANGES? ═══════════════════════════════════════════════════ */
+.st-ask {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(26, 26, 26, 0.32);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.st-ask-box {
+  width: min(100%, 380px);
+  padding: 26px 26px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    0 24px 60px rgba(26, 26, 26, 0.22),
+    inset 0 1.5px 3px rgba(255, 255, 255, 0.9);
+  color: var(--ink, #1a1a1a);
+  font-family: var(--font-sans);
+}
+.st-ask-box .st-eyebrow {
+  margin: 0 0 10px;
+}
+.st-ask-box h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+.st-ask-note {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--muted, #6b7378);
+}
+.st-ask-acts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 22px;
+}
+.st-ask-acts .st-btn {
+  width: 100%;
+  padding: 0;
+}
+.st-btn-danger {
+  background: linear-gradient(135deg, #ffd6c8, #fcb9a9);
+  box-shadow:
+    0 8px 22px rgba(252, 185, 169, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+  color: #8e4a2f;
+}
+@media (max-width: 640px) {
+  .st-bar-save[data-state="unsaved"] span {
+    display: none;
+  }
+  .st-bar-save[data-state="unsaved"] button {
+    display: inline;
+  }
+}

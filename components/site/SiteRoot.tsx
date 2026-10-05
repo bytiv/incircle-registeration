@@ -15,12 +15,13 @@ import type { RegFieldKey } from "@/lib/regFields";
 import { DEFAULT_HERO_IMAGE, DEFAULT_PAGE, LIST_MAX, normalizePage, type SitePage, type SitePhoto, type SiteText } from "@/lib/sitePage";
 
 import { AdminBar, type Notice, type SiteMode } from "./AdminBar";
+import { SaveAsk, type Ask } from "./SaveAsk";
 import { Album } from "./Album";
 import { EditImage } from "./EditImage";
 import { Arrow } from "./icons";
 import { RichText } from "./RichText";
 import { SiteForm } from "./SiteForm";
-import { useAutosave, worst } from "./useAutosave";
+import { useDraft } from "./useDraft";
 
 const line = (en: string) => ({ en, ar: "" });
 const removeAt = <T,>(list: T[], i: number) => list.filter((_, k) => k !== i);
@@ -49,8 +50,10 @@ type Props = SiteData & {
  * Visitors get the page. A signed-in host gets the same page and the bar at its bottom
  * (AdminBar): PREVIEW is exactly what a visitor sees; EDIT makes every part of it editable where
  * it shows — words typed in place (bold with ⌘B), the hero photo replaced, paragraphs and photos
- * added, removed and reordered, the form's fields arranged — and everything saves itself as it is
- * made (useAutosave), to the same settings the control room reads.
+ * added, removed and reordered, the form's fields arranged. The page is public, so none of it
+ * goes out as it is made: the edits stay a draft on the page (useDraft) until the host presses
+ * Save in the bar and confirms (SaveAsk) — then they land in the same settings the control room
+ * reads. Discard puts the page back to what is saved.
  */
 export function SiteRoot({ content, fields, open, full, when, admin }: Props) {
   const [mode, setMode] = useState<SiteMode>(admin?.edit ? "edit" : "preview");
@@ -64,13 +67,8 @@ export function SiteRoot({ content, fields, open, full, when, admin }: Props) {
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const anchor = useRef<{ id: string; top: number } | null>(null);
 
-  const pageSave = useAutosave("reg_page", content, 700, admin !== null);
-  const fieldSave = useAutosave("reg_fields", fields, 0, admin !== null);
-  const { push: pushPage } = pageSave;
-
-  useEffect(() => {
-    pushPage(normalizePage(page) ?? page);
-  }, [page, pushPage]);
+  const [ask, setAsk] = useState<Ask | null>(null);
+  const draft = useDraft({ reg_page: normalizePage(page) ?? page, reg_fields: order }, { reg_page: content, reg_fields: fields }, admin !== null);
 
   const edit = useCallback((next: (cfg: object) => object) => setPage((p) => next(p) as SitePage), []);
 
@@ -94,8 +92,6 @@ export function SiteRoot({ content, fields, open, full, when, admin }: Props) {
     const inView = parts.find((el) => el.getBoundingClientRect().bottom > 90);
     anchor.current = inView ? { id: inView.dataset.part ?? "", top: inView.getBoundingClientRect().top } : null;
     setMode(next);
-    pageSave.flush();
-    fieldSave.flush();
     const url = new URL(window.location.href);
     if (next === "edit") url.searchParams.set("edit", "1");
     else url.searchParams.delete("edit");
@@ -193,18 +189,32 @@ export function SiteRoot({ content, fields, open, full, when, admin }: Props) {
     if (item) offer("Photo removed", () => setPhotos((l) => insertAt(l, i, item)));
   };
 
+  /* ------------------------------------------------- save, or not */
+
+  const answer = async (what: Ask) => {
+    if (what === "discard") {
+      const was = draft.stored();
+      setPage(was.reg_page as SitePage);
+      setOrder(was.reg_fields as RegFieldKey[]);
+      setNotice(null);
+      draft.clear();
+      setAsk(null);
+      return;
+    }
+    const ok = await draft.save();
+    setAsk(null);
+    if (ok) setNotice(null);
+  };
+
   /* ------------------------------------------------- the form's fields */
 
-  const saveFields = (next: RegFieldKey[]) => {
-    setOrder(next);
-    fieldSave.push(next);
-  };
+  const saveFields = (next: RegFieldKey[]) => setOrder(next);
   const setRequired = (key: RegFieldKey, required: boolean) =>
     setPage((p) => ({ ...p, fields: { ...p.fields, [key]: { ...p.fields[key], required } } }));
 
   /* ------------------------------------------------- the page */
 
-  // Preview shows the page with its edits, exactly as visitors will see it once saved.
+  // Preview shows the page with its draft, exactly as visitors will see it once it is saved.
   const paragraphs = editing ? page.join.paragraphs : page.join.paragraphs.filter((t) => t.text.trim());
   const cards = editing ? page.about.cards : page.about.cards.filter((t) => t.text.trim());
   const photos = page.album.photos;
@@ -377,14 +387,14 @@ export function SiteRoot({ content, fields, open, full, when, admin }: Props) {
           mode={mode}
           onMode={changeMode}
           live={open}
-          save={worst(pageSave.state, fieldSave.state)}
-          onRetry={() => {
-            pageSave.flush();
-            fieldSave.flush();
-          }}
+          save={draft.state}
+          onSave={() => setAsk("save")}
+          onDiscard={() => setAsk("discard")}
+          onRetry={() => void draft.save()}
           notice={notice}
         />
       ) : null}
+      {admin ? <SaveAsk ask={ask} busy={draft.state === "saving"} onClose={() => setAsk(null)} onGo={(a) => void answer(a)} /> : null}
 
       <div ref={setLayer} className="st-layer" />
     </div>

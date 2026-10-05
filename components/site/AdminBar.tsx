@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 
 import { spring } from "@/lib/motion";
 
-import type { SaveState } from "./useAutosave";
+import type { SaveState } from "./useDraft";
 
 export type SiteMode = "preview" | "edit";
 
@@ -22,7 +22,9 @@ const MODES: { id: SiteMode; label: string }[] = [
  *
  *   ● Live            whether visitors can register right now (the control room publishes)
  *   Preview | Edit    the page exactly as a visitor sees it, or every part of it editable
- *   ● Saved           edits save themselves as they are made; a failed save says so and retries
+ *   ● Saved           nothing waiting — or "Unsaved changes" with Discard and Save: the page is
+ *                     public, so no edit goes out until the host has pressed Save and confirmed
+ *                     (SaveAsk). A failed save says so and offers Retry.
  *   Control room      the people, the approvals, the seats
  *
  * After something is taken off the page (a paragraph, a card, a photo) it says so here, with Undo.
@@ -32,6 +34,8 @@ export function AdminBar({
   onMode,
   live,
   save,
+  onSave,
+  onDiscard,
   onRetry,
   notice,
 }: {
@@ -39,6 +43,11 @@ export function AdminBar({
   onMode: (mode: SiteMode) => void;
   live: boolean;
   save: SaveState;
+  /** Save: asks first. */
+  onSave: () => void;
+  /** Discard: asks first. */
+  onDiscard: () => void;
+  /** Retry: sends again what was already confirmed. */
   onRetry: () => void;
   notice: Notice | null;
 }) {
@@ -96,6 +105,14 @@ export function AdminBar({
             <i aria-hidden />
             {save === "saving" ? <span>Saving…</span> : null}
             {save === "saved" ? <span>Saved</span> : null}
+            {save === "unsaved" ? (
+              <>
+                <span>Unsaved changes</span>
+                <button type="button" onClick={onDiscard}>
+                  Discard
+                </button>
+              </>
+            ) : null}
             {save === "failed" ? (
               <>
                 <span>Not saved</span>
@@ -117,6 +134,23 @@ export function AdminBar({
             ) : null}
           </motion.span>
         )}
+      </AnimatePresence>
+
+      <AnimatePresence initial={false}>
+        {save === "unsaved" ? (
+          <motion.button
+            key="save"
+            type="button"
+            className="st-bar-go"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={spring.snappy}
+            onClick={onSave}
+          >
+            Save
+          </motion.button>
+        ) : null}
       </AnimatePresence>
 
       <a className="st-bar-link" href="/admin">
