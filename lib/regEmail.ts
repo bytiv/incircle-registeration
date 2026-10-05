@@ -39,8 +39,7 @@ export const DEFAULT_REG_EMAIL: RegEmail = {
     "I’d love to personally connect with you before the Circle. You can expect a quick call from me soon to share more about InCircle, answer any questions you may have, and walk you through the next steps.\n\n" +
     "I’ll be calling you from +20 11 31087978, so you’ll know it’s me when I reach out.\n\n" +
     "Looking forward to connecting soon,\n" +
-    "Marina\n" +
-    "marina@incircle.community",
+    "Marina",
 };
 
 const oneLine = (s: string, max: number) => s.replace(/\s+/g, " ").trim().slice(0, max);
