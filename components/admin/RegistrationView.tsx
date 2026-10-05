@@ -15,7 +15,7 @@ import { registrationCapacity } from "@/lib/registration";
 import { getSetting } from "@/lib/settings";
 import { plainText } from "@/lib/sitePage";
 import type { EventStateRow } from "@/lib/supabase/types";
-
+ 
 /**
  * REGISTRATION PAGE — the public page (incircle.community).
  *
