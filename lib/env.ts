@@ -21,8 +21,9 @@ export const EVENT_SLUG = process.env.NEXT_PUBLIC_EVENT_SLUG || "incircle";
  * public page's link (and the page's own address in shared links), so it must
  * be one a visitor can open.
  *
- * Set NEXT_PUBLIC_SITE_URL to the deployed origin. Vercel's own VERCEL_URL is
- * used automatically when it is present, so production needs no configuration.
+ * Set NEXT_PUBLIC_SITE_URL to the deployed origin, on Vercel too: the fallback,
+ * VERCEL_URL, is the deployment's generated address, which Vercel's default
+ * Deployment Protection puts behind a Vercel login.
  */
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ||
@@ -61,6 +62,33 @@ export function requireServiceRoleKey(): string {
     );
   }
   return key;
+}
+
+/** A value pasted into Vercel with its .env quotes (`"InCircle <hello@…>"`) is read without them. */
+const unquote = (v: string | undefined) => (v ?? "").trim().replace(/^(["'])(.*)\1$/, "$2").trim();
+
+/**
+ * Server-only: Resend's keys (lib/email.ts), or null while email is off. RESEND_API_KEY is
+ * Resend → API Keys; EMAIL_FROM is an address on a domain verified in Resend, e.g.
+ * `InCircle <hello@incircle.community>`; EMAIL_REPLY_TO (optional) is the inbox a reply lands in.
+ */
+export function emailEnv(): { apiKey: string; from: string; replyTo: string } | null {
+  const apiKey = unquote(process.env.RESEND_API_KEY);
+  const from = unquote(process.env.EMAIL_FROM);
+  // A real key is "re_" and some thirty characters more; a placeholder like "re_..." reads as off.
+  if (!/^re_\S{16,}$/.test(apiKey) || !from.includes("@")) return null;
+  return { apiKey, from, replyTo: unquote(process.env.EMAIL_REPLY_TO) };
+}
+
+/**
+ * Server-only: the public address for what leaves the app — the welcome email's logo, opened by
+ * a mail client. NEXT_PUBLIC_SITE_URL when set; on Vercel, otherwise, the project's production
+ * domain (VERCEL_PROJECT_PRODUCTION_URL, there at runtime) — never VERCEL_URL, which is behind
+ * Vercel's login (SITE_URL above). "" locally.
+ */
+export function publicSiteUrl(): string {
+  const production = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  return (process.env.NEXT_PUBLIC_SITE_URL || (production ? `https://${production}` : "")).replace(/\/$/, "");
 }
 
 export function requireAdminPasscode(): string {

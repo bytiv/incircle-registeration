@@ -45,14 +45,18 @@ Copy `.env.example` to `.env.local` (locally) or into Vercel → Settings → En
 | `NEXT_PUBLIC_SUPABASE_URL` | yes | Supabase → Project Settings → API |
 | `SUPABASE_SERVICE_ROLE_KEY` | yes | Same page, the `service_role` (secret) key. Server-only |
 | `ADMIN_PASSCODE` | yes | Any passcode for `/admin` |
-| `NEXT_PUBLIC_SITE_URL` | no | The public address (e.g. `https://incircle.community`), for the link the Registration page prints and shared links (Vercel's own address is used if unset) |
+| `NEXT_PUBLIC_SITE_URL` | on Vercel | The public address (e.g. `https://incircle-registeration.vercel.app`), for the link the Registration page prints and the page's share previews. Unset, they fall back to the deployment's own address, which Vercel's default Deployment Protection puts behind a login |
 | `NEXT_PUBLIC_EVENT_TZ` | no | Default `Africa/Cairo` |
+| `RESEND_API_KEY` | for email | Resend → API Keys (Sending access). The welcome email is off until this and `EMAIL_FROM` are set |
+| `EMAIL_FROM` | for email | An address on a domain verified in Resend → Domains, e.g. `InCircle <hello@incircle.community>` |
+| `EMAIL_REPLY_TO` | no | The inbox a person's reply lands in |
 
 ### 3. Vercel
 
 Import the repository, add the variables above, deploy. Then in `/admin`:
 
-1. **Settings** → the event's name, date and location.
+1. **Settings** → the event's name, date and location, and the **welcome email** every new
+   sign-up is sent.
 2. **Registration page** → seats and the approval rule, then **Edit the page** for the words,
    pictures, album and form.
 3. Switch **PUBLIC PAGE** on and share the address.

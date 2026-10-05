@@ -16,6 +16,7 @@ import type { FlowAction } from "@/lib/admin/flow";
 import type { PersonAsk } from "@/lib/admin/runs";
 import { useAdminEventState, type Press, type RoomAnswer } from "@/lib/admin/useAdminEventState";
 import { fold, spring } from "@/lib/motion";
+import type { RegEmail } from "@/lib/regEmail";
 import { oneAtATime } from "@/lib/roomSync";
 import { holdsSeat, registrationCapacity } from "@/lib/registration";
 import type { AdminShellData } from "@/lib/queries/admin";
@@ -52,9 +53,12 @@ function parseInitial(iv: InitialView | undefined): View {
 export function AdminRoot({
   initial,
   initialView,
+  emailReady = false,
 }: {
   initial: AdminShellData;
   initialView?: InitialView;
+  /** Resend's keys are in the environment (lib/email.ts) — Settings' WELCOME EMAIL says so. */
+  emailReady?: boolean;
 }) {
   const router = useRouter();
   const start = useMemo(() => parseInitial(initialView), [initialView]);
@@ -287,6 +291,13 @@ export function AdminRoot({
   const saveOwners = useCallback(
     (build: (list: string[]) => string[]) =>
       send((latest) => ({ type: "setting", key: "lead_owners", value: build(getSetting(latest, "lead_owners")) })),
+    [send],
+  );
+
+  /** The welcome email, merged into the newest saved one when its turn comes, so the switch and the words never undo each other. */
+  const saveRegEmail = useCallback(
+    (patch: Partial<RegEmail>) =>
+      send((latest) => ({ type: "setting", key: "reg_email", value: { ...getSetting(latest, "reg_email"), ...patch } })),
     [send],
   );
 
@@ -541,6 +552,9 @@ export function AdminRoot({
           isPublic={registrationOpen}
           updateEvent={(patch) => mutate("/api/admin/events", { action: "update", id: initial.event.id, ...patch })}
           openRegistrationPage={() => go("regpage")}
+          regEmail={getSetting(state, "reg_email")}
+          emailReady={emailReady}
+          saveRegEmail={saveRegEmail}
           lockAdmin={lockAdmin}
         />
       )}

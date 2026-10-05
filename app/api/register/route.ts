@@ -1,8 +1,11 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 
 import { bumpRosterSeq, nextBubbleSlots, slugify, uniqueSlug, verifyCode } from "@/lib/admin/roster";
+import { emailReady, sendEmail } from "@/lib/email";
+import { publicSiteUrl } from "@/lib/env";
 import { resolvePublicEvent } from "@/lib/queries/eventRef";
 import { findOrCreatePerson } from "@/lib/queries/people";
+import { renderRegEmail } from "@/lib/regEmail";
 import { EMAIL_SHAPE, isAttendeeKind, registrationCapacity, registrationFields, registrationFull } from "@/lib/registration";
 import { getSetting } from "@/lib/settings";
 import { saveFacePhoto } from "@/lib/storage";
@@ -205,5 +208,22 @@ export async function POST(request: Request) {
     if (linkError) console.error("[incircle] /api/register: the photo / directory link did not save —", linkError.message);
   }
   await bumpRosterSeq(supabase, event.id);
+
+  /*
+   * THE WELCOME EMAIL (Settings → WELCOME EMAIL, lib/regEmail.ts), sent after the answer has
+   * gone: the visitor never waits on Resend, and an email that fails is logged, never a lost
+   * sign-up. The seat's id is the idempotency key, so one sign-up is one email.
+   */
+  const welcome = getSetting(state, "reg_email");
+  if (welcome.on && emailReady()) {
+    const seatId = seat.id;
+    const site = publicSiteUrl();
+    const logo = site.startsWith("https://") ? `${site}/brand/typeface.png` : undefined;
+    const message = renderRegEmail(welcome, { name, event: event.name }, { logo });
+    after(async () => {
+      const sent = await sendEmail({ to: email, ...message, key: `welcome-${seatId}` });
+      if (!sent.ok) console.error("[incircle] /api/register: the welcome email did not go —", sent.error);
+    });
+  }
   return NextResponse.json({ ok: true, waitlist: full, approve });
 }

@@ -1,4 +1,5 @@
 import { isUnlocked } from "@/lib/admin/auth";
+import { emailReady } from "@/lib/email";
 import { hasServiceRoleKey, isSupabaseConfigured } from "@/lib/env";
 import { getAdminData } from "@/lib/queries/admin";
 import { AdminGate } from "@/components/admin/AdminGate";
@@ -63,5 +64,5 @@ export default async function AdminPage({
     );
   }
 
-  return <AdminRoot key={result.data.event.id} initial={result.data} initialView={initialView} />;
+  return <AdminRoot key={result.data.event.id} initial={result.data} initialView={initialView} emailReady={emailReady()} />;
 }
