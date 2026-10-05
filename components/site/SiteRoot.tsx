@@ -112,18 +112,23 @@ export function SiteRoot({ content, fields, open, full, when, admin }: Props) {
 
   /* ------------------------------------------------- reveal on scroll */
 
+  /*
+   * A part that has come into view is marked with `data-in`, an attribute React does not own: a
+   * class added here was wiped the moment React re-rendered a part's own classes — grabbing the
+   * album strip (its `is-grabbing`) made the whole strip fade out and slide away, for good.
+   */
   useEffect(() => {
     if (editing) return;
-    const els = [...document.querySelectorAll<HTMLElement>(".st-reveal:not(.is-in)")];
+    const els = [...document.querySelectorAll<HTMLElement>(".st-reveal:not([data-in])")];
     if (!("IntersectionObserver" in window)) {
-      els.forEach((el) => el.classList.add("is-in"));
+      els.forEach((el) => el.setAttribute("data-in", ""));
       return;
     }
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
           if (!e.isIntersecting) continue;
-          e.target.classList.add("is-in");
+          e.target.setAttribute("data-in", "");
           io.unobserve(e.target);
         }
       },

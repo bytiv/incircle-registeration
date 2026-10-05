@@ -279,7 +279,7 @@
     opacity 1s var(--ease),
     transform 1s var(--ease);
 }
-.st-reveal.is-in,
+.st-reveal[data-in],
 .st-editing .st-reveal {
   opacity: 1;
   transform: none;
