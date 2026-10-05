@@ -17,7 +17,7 @@ import { DEFAULT_HERO_IMAGE, DEFAULT_PAGE, LIST_MAX, normalizePage, type SitePag
 import { AdminBar, type Notice, type SiteMode } from "./AdminBar";
 import { Album } from "./Album";
 import { EditImage } from "./EditImage";
-import { Arrow, Chevron } from "./icons";
+import { Arrow } from "./icons";
 import { RichText } from "./RichText";
 import { SiteForm } from "./SiteForm";
 import { useAutosave, worst } from "./useAutosave";
@@ -218,9 +218,10 @@ export function SiteRoot({ content, fields, open, full, when, admin }: Props) {
 
       <header className={cx("st-nav", scrolled && "is-scrolled")}>
         <div className="st-wrap st-nav-in">
-          <a className="st-mark" href="#top" aria-label="InCircle — back to the top">
-            <i className="st-orb glow" aria-hidden />
-            <b>InCircle</b>
+          <a className="st-mark" href="#top" aria-label="InCircle Community — back to the top">
+            {/* InCircle's own wordmark, the words only (public/brand/typeface.png). */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- a small fixed brand file, shown as it is */}
+            <img src="/brand/typeface.png" alt="InCircle Community" width={103} height={42} />
           </a>
           <Go className="st-btn st-btn-commit st-btn-sm" {...to("#register")}>
             <T className="lbl" path="nav.cta" value={page.nav.cta} placeholder="+ A button" />
@@ -232,8 +233,10 @@ export function SiteRoot({ content, fields, open, full, when, admin }: Props) {
         {/* ── the invitation ── */}
         <section className="st-hero" data-part="hero">
           <div className="st-wrap st-hero-in">
-            <span className="st-hero-mark" aria-hidden>
-              <i className="st-orb lg glow alive" />
+            <span className="st-hero-mark">
+              {/* InCircle's own logo, the circle with the words (public/brand/logo.png). */}
+              {/* eslint-disable-next-line @next/next/no-img-element -- a small fixed brand file, shown as it is */}
+              <img src="/brand/logo.png" alt="InCircle Community" width={216} height={216} />
             </span>
             <T as="p" className="st-eyebrow" path="hero.tagline" value={page.hero.tagline} placeholder="+ A line over the heading" />
             <T as="h1" className="st-h1" path="intro.heading" value={page.intro.heading} placeholder="+ The invitation" />
@@ -249,12 +252,6 @@ export function SiteRoot({ content, fields, open, full, when, admin }: Props) {
                 <T className="lbl" path="nav.cta" value={page.nav.cta} placeholder="+ A button" />
                 <Arrow className="arr" />
               </Go>
-              {editing || photos.length ? (
-                <Go className="st-link" {...to("#moments")}>
-                  <T path="hero.more" value={page.hero.more} placeholder="+ A link" />
-                  <Chevron dir="right" />
-                </Go>
-              ) : null}
             </div>
           </div>
           <div className="st-wrap st-hero-shot">
@@ -368,10 +365,6 @@ export function SiteRoot({ content, fields, open, full, when, admin }: Props) {
 
       <footer className="st-foot">
         <div className="st-wrap st-foot-in">
-          <span className="st-sign" aria-label="InCircle Community">
-            <b>InCircle</b>
-            <span>Community</span>
-          </span>
           <p>
             <T path="footer.text" value={page.footer.text} placeholder="+ A line" />
             <T as="b" path="footer.brand" value={page.footer.brand} placeholder="+ A name" />

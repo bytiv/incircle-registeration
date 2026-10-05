@@ -318,108 +318,22 @@
   gap: 16px;
   height: var(--nav-h);
 }
-/* the header mark: the orb and the wordmark, side by side (InCircle's A10, variant 4) */
+/* the header mark: InCircle's own wordmark, the words only (public/brand/typeface.png) */
 .st-mark {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  padding: 6px 6px 6px 4px;
   text-decoration: none;
 }
-
-/* THE ORB — InCircle's mark, drawn in code the way the brand draws it: a white sphere lit from
-   the upper left, its colour only at the rim (peach, lavender, cyan, mint — the cyan strongest,
-   low on the right), its edge dissolving into the page. No ring, no outline. */
-.st-orb {
-  --s: 26px;
-  position: relative;
+.st-mark img {
   display: block;
-  width: var(--s);
-  height: var(--s);
-  flex: none;
-  border-radius: 50%;
-  isolation: isolate;
-}
-.st-orb::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    #f8def0,
-    #dcd0f7 12%,
-    #c4d6fb 25%,
-    #8fdcff 38%,
-    #a0e8f5 48%,
-    #c4f1e5 60%,
-    #eef9f0 74%,
-    #ffe6c6 87%,
-    #f8def0
-  );
-  filter: blur(calc(var(--s) * 0.04));
-}
-.st-orb::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: radial-gradient(
-    ellipse 62% 62% at 42% 40%,
-    #ffffff 0%,
-    #ffffff 42%,
-    rgba(255, 255, 255, 0.72) 70%,
-    rgba(255, 255, 255, 0) 100%
-  );
-}
-.st-orb:not(.lg)::after {
-  background: radial-gradient(
-    ellipse 58% 58% at 42% 40%,
-    #ffffff 0%,
-    #ffffff 36%,
-    rgba(255, 255, 255, 0.7) 66%,
-    rgba(255, 255, 255, 0) 100%
-  );
-}
-/* a light that falls from it, so it sits on white without a line around it */
-.st-orb.glow {
-  box-shadow: 0 calc(var(--s) * 0.14) calc(var(--s) * 0.5) rgba(117, 226, 255, 0.26);
-}
-.st-orb.lg {
-  --s: 92px;
-}
-/* the big one is alive: its colours drift slowly round the rim, and it breathes */
-.st-orb.alive {
-  animation: stBreathe 8s ease-in-out infinite;
-}
-.st-orb.alive::before {
-  animation: stTurn 28s linear infinite;
-  will-change: transform;
-}
-@keyframes stTurn {
-  to {
-    transform: rotate(1turn);
-  }
-}
-@keyframes stBreathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.035);
-  }
+  width: auto;
+  height: 28px;
 }
 @media (max-width: 600px) {
-  .st-orb.lg {
-    --s: 78px;
+  .st-mark img {
+    height: 25px;
   }
-}
-.st-mark b {
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  line-height: 1;
-  color: var(--ink-soft);
 }
 
 /* ══ THE INVITATION ════════════════════════════════════════════════════════ */
@@ -469,8 +383,15 @@
     transform: translateY(14px);
   }
 }
+/* InCircle's own logo, the circle with the words (public/brand/logo.png) */
 .st-hero-mark {
-  margin-bottom: 28px;
+  display: block;
+  margin-bottom: 18px;
+}
+.st-hero-mark img {
+  display: inline-block;
+  width: clamp(132px, 13vw, 164px);
+  height: auto;
 }
 .st-hero .st-eyebrow {
   margin-bottom: 16px;
@@ -510,33 +431,6 @@
   justify-content: center;
   gap: 10px 22px;
   margin-top: 34px;
-}
-/* the quiet second action: words and a chevron */
-.st-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 52px;
-  padding: 0 4px;
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -0.005em;
-  color: var(--ink-soft);
-  text-decoration: none;
-  transition: color 0.3s var(--ease);
-}
-.st-link svg {
-  width: 16px;
-  height: 16px;
-  transition: transform 0.35s var(--ease);
-}
-@media (hover: hover) {
-  .st-link:hover {
-    color: var(--ink);
-  }
-  .st-link:hover svg {
-    transform: translateX(3px);
-  }
 }
 .st-hero-shot {
   margin-top: clamp(48px, 7vw, 80px);
@@ -585,9 +479,6 @@
   }
   .st-cta .st-btn {
     width: 100%;
-  }
-  .st-cta .st-link {
-    height: 44px;
   }
 }
 
@@ -1307,31 +1198,9 @@
 .st-foot-in {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 20px;
-}
-/* the corner signature: the wordmark in the ramp, COMMUNITY tracked (InCircle's A10, variant 3) */
-.st-sign {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.st-sign b {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  line-height: 1;
-  background: var(--ramp-ink);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.st-sign span {
-  font-size: 8.5px;
-  font-weight: 500;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
+  text-align: center;
 }
 .st-foot p {
   margin: 0;
@@ -1344,18 +1213,6 @@
   font-weight: 800;
   letter-spacing: 0.06em;
   color: var(--ink-soft);
-}
-@media (max-width: 600px) {
-  .st-foot-in {
-    flex-direction: column;
-    text-align: center;
-  }
-  .st-sign {
-    align-items: center;
-  }
-  .st-sign span {
-    padding-left: 0.3em;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
