@@ -129,7 +129,7 @@ export const DEFAULT_PAGE: SitePage = {
     heading: "Moments from the circle",
     photos: ALBUM.map(([file, w, h], i) => ({ src: `/site/album/${file}`, w, h, alt: `InCircle community gathering ${i + 1}` })),
   },
-  footer: { text: "This community is powered by", brand: "DOTMENT" },
+  footer: { text: "Powered by", brand: "DOTMENT" },
 };
 
 /* ------------------------------------------------------------------ limits */
