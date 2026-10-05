@@ -384,9 +384,11 @@
   }
 }
 /* InCircle's own logo, the circle with the words (public/brand/logo.png) */
+/* The logo stands on its own: clear air under its COMMUNITY, so it never reads as one block with
+   the small line over the heading (which belongs to the heading, close above it). */
 .st-hero-mark {
   display: block;
-  margin-bottom: 18px;
+  margin-bottom: clamp(34px, 4.4vw, 52px);
 }
 .st-hero-mark img {
   display: inline-block;
@@ -394,7 +396,7 @@
   height: auto;
 }
 .st-hero .st-eyebrow {
-  margin-bottom: 16px;
+  margin-bottom: clamp(14px, 1.5vw, 20px);
   padding-left: 0.24em;
 }
 .st-hero .st-h1 {
